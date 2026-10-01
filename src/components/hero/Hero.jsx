@@ -258,6 +258,10 @@ function SignalParallax({ reduced }) {
       
       mesh.add(points)
       mesh.add(lines)
+      
+      // Shift the 3D model to the right side of the screen to balance the typography
+      mesh.position.x = 90
+      
       scene.add(mesh)
 
       const resize = () => {
