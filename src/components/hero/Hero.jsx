@@ -302,6 +302,9 @@ function SignalParallax({ reduced }) {
         renderer.render(scene, camera)
         if (!reduced) frame = requestAnimationFrame(render)
       }
+      
+      // Kickstart the render loop
+      render()
 
       window.addEventListener('resize', resize)
       window.addEventListener('pointermove', move)
