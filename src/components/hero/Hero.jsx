@@ -99,19 +99,6 @@ export default function Hero() {
         '--mouse-y': mouseNorm.y
       }}
     >
-      {/* Main Background Shader (Pixel Art Scene) */}
-      <div
-        className="hero__instrument"
-        ref={glyphRef}
-        style={{
-          transform: `translate(${dx * 6}px, ${dy * 4}px)`,
-          transition: reduced ? 'none' : 'transform 0.95s cubic-bezier(0.2,0.8,0.2,1)',
-        }}
-        data-cursor="explore"
-      >
-        <SignalParallax reduced={reduced} />
-      </div>
-
       {/* Background grid */}
       <HeroGrid />
 
@@ -169,6 +156,19 @@ export default function Hero() {
               Get in touch
             </a>
           </div>
+        </div>
+
+        {/* Right: interactive shader artwork */}
+        <div
+          className="hero__instrument"
+          ref={glyphRef}
+          style={{
+            transform: `translate(${dx * 6}px, ${dy * 4}px)`,
+            transition: reduced ? 'none' : 'transform 0.95s cubic-bezier(0.2,0.8,0.2,1)',
+          }}
+          data-cursor="explore"
+        >
+          <SignalParallax reduced={reduced} />
         </div>
       </div>
 
@@ -232,131 +232,73 @@ function SignalParallax({ reduced }) {
       const pointer = { x: 0, y: 0 }
       const target = { x: 0, y: 0 }
       let frame = 0
-      let mesh
-      let material
-      let textures = []
+      let mesh = new THREE.Group()
 
-      const fragmentShader = `
-        precision highp float;
-        varying vec2 vUv;
-        uniform sampler2D textureImage;
-        uniform sampler2D textureDepth;
-        uniform vec2 mousePosition;
-        uniform float hoverState;
-        
-        // CONFIGURABLE PARAMETERS
-        const float BASE_PARALLAX = 0.035;
-        const float HOVER_PARALLAX_BOOST = 0.015;
-        
-        void main () {
-          vec4 texDepth = texture2D(textureDepth, vUv);
-          
-          // Normalized depth [-0.5, 0.5]
-          float depthVal = texDepth.r - 0.5;
-          
-          // Displacement based on mouse, depth, and hover state
-          float parallax = BASE_PARALLAX + (HOVER_PARALLAX_BOOST * hoverState);
-          vec2 displacedUv = vUv + (mousePosition * depthVal * parallax);
-          
-          vec4 texImage = texture2D(textureImage, displacedUv);
-          
-          // No edge fade in GLSL—handled smoothly by CSS mask on the parent shell
-          // This allows the scene to seamlessly merge with the hero section
-          gl_FragColor = vec4(texImage.rgb, 1.0);
-        }
-      `
+      // Create an abstract, organic twisting data structure (Torus Knot)
+      const geometry = new THREE.TorusKnotGeometry(75, 20, 200, 32)
+      
+      // Node particles (Data points)
+      const pointMaterial = new THREE.PointsMaterial({
+        color: 0xd2ff00, // Lime accent
+        size: 1.5,
+        transparent: true,
+        opacity: 0.9,
+        sizeAttenuation: true
+      })
+      
+      // Connections (Neural/Network links)
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0xd2ff00,
+        transparent: true,
+        opacity: 0.12
+      })
 
-      const vertexShader = `
-        attribute vec3 position;
-        attribute vec2 uv;
-        uniform mat4 projectionMatrix;
-        uniform mat4 modelViewMatrix;
-        uniform mat3 normalMatrix;
-        varying vec2 vUv;
-
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `
-
-      const loader = new THREE.TextureLoader()
-      const basePath = import.meta.env.BASE_URL || '/'
-      const urls = [
-        basePath + 'hero-shader/pixel-desk.png',
-        basePath + 'hero-shader/pixel-desk-depth.jpg'
-      ]
-      let loaded = 0
-      const loadedTextures = []
-      const start = () => {
-        if (cancelled || loaded < urls.length) return
-        textures = loadedTextures
-        textures[0].minFilter = THREE.LinearFilter
-        textures[1].magFilter = textures[1].minFilter = THREE.LinearFilter
-
-        material = new THREE.RawShaderMaterial({
-          transparent: true,
-          vertexShader,
-          fragmentShader,
-          uniforms: {
-            textureImage: { value: textures[0] },
-            textureDepth: { value: textures[1] },
-            mousePosition: { value: new THREE.Vector2(0.0, 0.0) },
-            hoverState: { value: 0.0 }
-          },
-        })
-        // The image is 16:9 aspect ratio (pixel art scene)
-        mesh = new THREE.Mesh(new THREE.PlaneGeometry(320, 180, 128, 128), material)
-        scene.add(mesh)
-        resize()
-        render()
-      }
-      urls.forEach((url, index) => loader.load(url, (texture) => {
-        loadedTextures[index] = texture
-        loaded += 1
-        start()
-      }))
+      const points = new THREE.Points(geometry, pointMaterial)
+      const lines = new THREE.LineSegments(new THREE.WireframeGeometry(geometry), lineMaterial)
+      
+      mesh.add(points)
+      mesh.add(lines)
+      scene.add(mesh)
 
       const resize = () => {
         const rect = shell.getBoundingClientRect()
         renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false)
         camera.aspect = rect.width / Math.max(rect.height, 1)
         camera.updateProjectionMatrix()
-        
-        if (mesh) {
-          const dist = camera.position.z
-          const vFov = (camera.fov * Math.PI) / 180
-          const planeHeightAtDistance = 2 * Math.tan(vFov / 2) * dist
-          const planeWidthAtDistance = planeHeightAtDistance * camera.aspect
-          // Since we want the artwork to act like 'cover' inside the container, we scale it
-          const scale = Math.max(planeWidthAtDistance / 320, planeHeightAtDistance / 180)
-          mesh.scale.set(scale, scale, 1)
-        }
       }
+      resize()
+
       // Current logical pointer position for smooth lerp
       const currentPointer = { x: 0, y: 0 }
-      let targetHover = 0.0
-      let currentHover = 0.0
 
       const move = (event) => {
         const rect = shell.getBoundingClientRect()
         // Map mouse coordinates to [-1, 1] relative to the shell center
         target.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
         target.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1)
-        targetHover = 1.0
       }
       const leave = () => { 
         target.x = 0
         target.y = 0 
-        targetHover = 0.0
       }
       const render = (time = 0) => {
-        if (!mesh || !material) return
-        pointer.x += (target.x - pointer.x) * 0.07
-        pointer.y += (target.y - pointer.y) * 0.07
-        currentHover += (targetHover - currentHover) * 0.05
-        material.uniforms.mousePosition.value.set(pointer.x, pointer.y)
-        material.uniforms.hoverState.value = currentHover
+        if (!mesh) return
+        pointer.x += (target.x - pointer.x) * 0.05
+        pointer.y += (target.y - pointer.y) * 0.05
+        
+        // Organic continuous rotation
+        mesh.rotation.y = time * 0.0003
+        mesh.rotation.x = time * 0.00015
+        
+        // Interactive tilt based on mouse position
+        mesh.rotation.y += pointer.x * 0.6
+        mesh.rotation.x += pointer.y * 0.6
+        
+        // Slight scale bounce based on mouse movement
+        const dist = Math.sqrt(pointer.x*pointer.x + pointer.y*pointer.y)
+        const scale = 1.0 + (dist * 0.05)
+        mesh.scale.set(scale, scale, scale)
+
         renderer.render(scene, camera)
         if (!reduced) frame = requestAnimationFrame(render)
       }
