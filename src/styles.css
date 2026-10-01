@@ -687,11 +687,25 @@ input, textarea { font: inherit; }
 .hero__instrument {
   position: absolute;
   top: 0;
-  left: 0;
-  width: 100%; /* Full screen */
+  right: 0;
+  width: 55vw; /* Occupy right side */
   height: 100%;
   z-index: 0;
   pointer-events: none; /* Let clicks pass through */
+}
+
+@media (max-width: 900px) {
+  .hero__body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero__instrument {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    margin-top: 40px;
+    right: auto;
+  }
 }
 
 /* Parallax Shader Background */
