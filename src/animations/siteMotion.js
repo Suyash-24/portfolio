@@ -5,6 +5,7 @@ import Lenis from 'lenis'
 gsap.registerPlugin(ScrollTrigger)
 
 export function splitReveal(container) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   const items = container.querySelectorAll('[data-reveal]')
   items.forEach((item, index) => {
     gsap.fromTo(item,
@@ -15,6 +16,7 @@ export function splitReveal(container) {
 }
 
 export function createSmoothScroll() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {}
   const lenis = new Lenis({ duration: 1.1, smoothWheel: true, syncTouch: false })
   let raf
   const tick = (time) => {

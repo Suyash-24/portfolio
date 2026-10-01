@@ -72,10 +72,21 @@ export const skills = [
 ]
 
 export const journey = [
-  { year: 'NOW', label: 'Computer Engineering', detail: 'Building the base: programming, systems, mathematics, and a sharper instinct for useful data.' },
-  { year: '01', label: 'Make it work', detail: 'Small tools became a way to learn backend logic, automation, and repeatable workflows.' },
-  { year: '02', label: 'Make it legible', detail: 'Exploratory analysis turned raw data into patterns, questions, and decisions someone can act on.' },
-  { year: 'NEXT', label: 'Make it matter', detail: 'Looking for an internship or entry-level opportunity in Data Science, Analytics, or related roles.' },
+  { year: '2022', label: 'Computer Engineering', detail: 'Building the base: programming, systems, mathematics, and a sharper instinct for useful data.' },
+  { year: '2024', label: 'Programming / Python', detail: 'Small tools became a way to learn backend logic, automation, and repeatable workflows.' },
+  { year: '2025', label: 'Data Analytics', detail: 'Exploratory analysis turned raw data into patterns, questions, and decisions someone can act on.' },
+  { year: '2026', label: 'Machine Learning / Projects', detail: 'Turning foundational ML concepts into focused, testable personal projects.' },
+  { year: 'NOW', label: "Building what's next", detail: 'Looking for an internship or entry-level opportunity in Data Science, Analytics, or related roles.' },
+]
+
+export const skillConnections = [
+  ['python', 'data'],
+  ['python', 'backend'],
+  ['data', 'ml'],
+  ['data', 'stats'],
+  ['ml', 'stats'],
+  ['ml', 'automation'],
+  ['automation', 'backend'],
 ]
 
 export const marqueeItems = ['DATA', 'MACHINE LEARNING', 'PYTHON', 'ANALYTICS', 'MATHEMATICS', 'SYSTEMS']
