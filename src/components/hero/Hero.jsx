@@ -246,10 +246,9 @@ function SignalParallax({ reduced }) {
         uniform float hoverState;
         
         // CONFIGURABLE PARAMETERS
-        const float BASE_PARALLAX = 0.05;
-        const float HOVER_PARALLAX_BOOST = 0.03;
-        const float LIGHT_STRENGTH = 0.6;
-        const float EDGE_FADE = 0.35;
+        const float BASE_PARALLAX = 0.035;
+        const float HOVER_PARALLAX_BOOST = 0.015;
+        const float LIGHT_STRENGTH = 0.2;
         
         void main () {
           vec4 texDepth = texture2D(textureDepth, vUv);
@@ -263,18 +262,18 @@ function SignalParallax({ reduced }) {
           
           vec4 texImage = texture2D(textureImage, displacedUv);
           
-          // Dynamic Lighting: dot product between mouse direction and depth
+          // Subtle Dynamic Lighting (just slightly lifts brightness on foreground layers)
           float lightIntensity = max(0.0, dot(mousePosition, vec2(0.5)) * depthVal * LIGHT_STRENGTH);
+          vec3 finalColor = texImage.rgb + (vec3(1.0, 1.0, 0.95) * lightIntensity * hoverState);
           
-          // Push towards technical aesthetic with light bleeding
-          // Add a tiny bit of ambient volumetric glow from the depth map
-          vec3 finalColor = texImage.rgb + (vec3(0.8, 1.0, 0.6) * lightIntensity) + (vec3(0.2, 0.3, 0.1) * depthVal * hoverState);
-          
-          // Edge Fade: Soften edges using a circular gradient to completely remove rectangular bounds
-          float distFromCenter = distance(vUv, vec2(0.5));
+          // Edge Fade: Soften edges using an elliptical gradient to completely remove rectangular bounds
+          // We adjust the y-distance to account for the 3:2 aspect ratio
+          vec2 centeredUv = vUv - vec2(0.5);
+          centeredUv.y *= 1.5; // Scale y to make the distance calc elliptical
+          float distFromCenter = length(centeredUv);
           float edgeMask = 1.0 - smoothstep(0.25, 0.5, distFromCenter);
           
-          finalColor *= edgeMask; // Fade to black at edges
+          finalColor *= edgeMask; // Fade to black at edges smoothly
 
           gl_FragColor = vec4(finalColor, 1.0);
         }
@@ -297,8 +296,8 @@ function SignalParallax({ reduced }) {
       const loader = new THREE.TextureLoader()
       const basePath = import.meta.env.BASE_URL || '/'
       const urls = [
-        basePath + 'hero-shader/spatial-base.jpg',
-        basePath + 'hero-shader/spatial-depth.jpg'
+        basePath + 'hero-shader/scene-base.jpg',
+        basePath + 'hero-shader/scene-depth.jpg'
       ]
       let loaded = 0
       const loadedTextures = []
@@ -319,8 +318,8 @@ function SignalParallax({ reduced }) {
             hoverState: { value: 0.0 }
           },
         })
-        // The image is 4:5 aspect ratio
-        mesh = new THREE.Mesh(new THREE.PlaneGeometry(200, 250, 128, 128), material)
+        // The image is 3:2 aspect ratio (landscape scene)
+        mesh = new THREE.Mesh(new THREE.PlaneGeometry(300, 200, 128, 128), material)
         scene.add(mesh)
         resize()
         render()
@@ -343,7 +342,7 @@ function SignalParallax({ reduced }) {
           const planeHeightAtDistance = 2 * Math.tan(vFov / 2) * dist
           const planeWidthAtDistance = planeHeightAtDistance * camera.aspect
           // Since we want the artwork to act like 'cover' inside the container, we scale it
-          const scale = Math.max(planeWidthAtDistance / 200, planeHeightAtDistance / 250)
+          const scale = Math.max(planeWidthAtDistance / 300, planeHeightAtDistance / 200)
           mesh.scale.set(scale, scale, 1)
         }
       }

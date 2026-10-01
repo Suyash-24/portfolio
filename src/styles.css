@@ -685,12 +685,12 @@ input, textarea { font: inherit; }
 }
 .hero__cta--ghost:hover { border-color: rgba(232, 236, 226, 0.55); color: #e8ece2; }
 
-/* Instrument: right side (35-42% width, volumetric) */
+/* Instrument: right side (immersive scene) */
 .hero__instrument {
   position: relative;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 3 / 2;
   width: 100%;
-  max-width: 600px; /* Let it grow slightly larger */
+  max-width: 750px; /* Allow the scene to be large */
   margin-left: auto;
   will-change: transform;
   flex-shrink: 0;
@@ -700,17 +700,17 @@ input, textarea { font: inherit; }
 /* Parallax Shader Background */
 .hero__shader-shell {
   position: absolute;
-  inset: -15%; /* Allow it to bleed significantly into the grid */
-  width: 130%;
-  height: 130%;
+  inset: -10%; /* Bleed to give room for soft masking */
+  width: 120%;
+  height: 120%;
   overflow: hidden;
   z-index: 0;
   pointer-events: auto;
   opacity: 1;
-  mix-blend-mode: screen;
-  /* Organic soft mask rather than a hard pill shape */
-  mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 70%);
-  -webkit-mask-image: -webkit-radial-gradient(center, circle cover, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 70%);
+  mix-blend-mode: screen; /* Fades black to transparent */
+  /* Organic soft mask to completely eliminate hard bounds */
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 75%);
+  -webkit-mask-image: -webkit-radial-gradient(center, ellipse cover, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 75%);
   transition: opacity var(--dur-slow) var(--ease-out);
 }
 
