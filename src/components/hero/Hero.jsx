@@ -99,6 +99,19 @@ export default function Hero() {
         '--mouse-y': mouseNorm.y
       }}
     >
+      {/* Main Background Shader (Pixel Art Scene) */}
+      <div
+        className="hero__instrument"
+        ref={glyphRef}
+        style={{
+          transform: `translate(${dx * 6}px, ${dy * 4}px)`,
+          transition: reduced ? 'none' : 'transform 0.95s cubic-bezier(0.2,0.8,0.2,1)',
+        }}
+        data-cursor="explore"
+      >
+        <SignalParallax reduced={reduced} />
+      </div>
+
       {/* Background grid */}
       <HeroGrid />
 
@@ -158,18 +171,6 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right: Technical Identity Portrait */}
-        <div
-          className="hero__instrument"
-          ref={glyphRef}
-          style={{
-            transform: `translate(${dx * 6}px, ${dy * 4}px)`,
-            transition: reduced ? 'none' : 'transform 0.95s cubic-bezier(0.2,0.8,0.2,1)',
-          }}
-          data-cursor="explore"
-        >
-          {/* Central 2.5D parallax portrait */}
-          <SignalParallax reduced={reduced} />
         </div>
       </div>
 

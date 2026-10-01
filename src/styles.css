@@ -687,8 +687,8 @@ input, textarea { font: inherit; }
 .hero__instrument {
   position: absolute;
   top: 0;
-  right: 0;
-  width: 70%; /* Occupy the right side but without a bounding box */
+  left: 0;
+  width: 100%; /* Full screen */
   height: 100%;
   z-index: 0;
   pointer-events: none; /* Let clicks pass through */
