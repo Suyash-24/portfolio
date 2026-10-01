@@ -688,7 +688,7 @@ input, textarea { font: inherit; }
   position: absolute;
   top: 0;
   right: 0;
-  width: 55vw; /* Occupy right side */
+  width: 45vw; /* Occupy roughly 40-45% of width */
   height: 100%;
   z-index: 0;
   pointer-events: none; /* Let clicks pass through */

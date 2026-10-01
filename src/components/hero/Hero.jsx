@@ -260,16 +260,20 @@ function SignalParallax({ reduced }) {
           
           vec4 texImage = texture2D(textureImage, displacedUv);
           
-          // Atmospheric fade to smoothly blend edges into dark background
+          // Distance from center [0.5, 0.5]
           float dist = distance(vUv, vec2(0.5));
           
-          // Fade heavily on the left to avoid overlapping the typography
-          float leftFade = smoothstep(0.05, 0.4, vUv.x);
+          // 1. Fade heavily on the left to avoid overlapping typography
+          float leftFade = smoothstep(0.05, 0.35, vUv.x);
           
-          // Radial vignette to melt the scene into the dark void
-          float vignette = smoothstep(0.65, 0.25, dist);
+          // 2. Radial vignette: must reach 0.0 alpha BEFORE dist=0.5 (the physical edge of the plane geometry)
+          // This completely eliminates the "inner rectangle" edge artifact.
+          float vignette = smoothstep(0.48, 0.20, dist);
           
-          float combinedMask = leftFade * vignette;
+          // 3. Extra top/bottom soft feathering to guarantee no straight lines
+          float topBottomFade = smoothstep(0.02, 0.15, vUv.y) * smoothstep(0.98, 0.85, vUv.y);
+          
+          float combinedMask = leftFade * vignette * topBottomFade;
           
           gl_FragColor = vec4(texImage.rgb, combinedMask);
         }
@@ -291,8 +295,8 @@ function SignalParallax({ reduced }) {
       const loader = new THREE.TextureLoader()
       const basePath = import.meta.env.BASE_URL || '/'
       const urls = [
-        basePath + 'hero-shader/cinematic-workspace.jpg',
-        basePath + 'hero-shader/workspace-depth.jpg'
+        basePath + 'hero-shader/anime-workspace.jpg',
+        basePath + 'hero-shader/anime-depth.jpg'
       ]
       let loaded = 0
       const loadedTextures = []
@@ -315,7 +319,7 @@ function SignalParallax({ reduced }) {
           },
         })
         
-        // Use a 1:1 plane geometry since the generated images are square
+        // Use a 1:1 plane geometry since the generated anime images are square
         mesh = new THREE.Mesh(new THREE.PlaneGeometry(1024, 1024, 64, 64), material)
         scene.add(mesh)
         resize()
