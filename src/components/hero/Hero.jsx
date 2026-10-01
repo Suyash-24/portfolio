@@ -33,8 +33,6 @@ export default function Hero() {
         duration: 0.7,
         ease: 'power3.inOut',
       }, 0.1)
-      // Identity mark builds in
-      tl.from('.hero__identity', { scale: 0.7, opacity: 0, duration: 1.1, ease: 'expo.out' }, 0.2)
       // Title words reveal
       tl.from('.hero__title-word', {
         yPercent: 105,
@@ -43,18 +41,25 @@ export default function Hero() {
         duration: 1.0,
         ease: 'power4.out',
       }, 0.45)
-      // Data points appear
-      tl.from('.hero__dp', {
-        scale: 0,
-        opacity: 0,
-        stagger: 0.12,
-        duration: 0.7,
-        ease: 'back.out(1.5)',
-      }, 0.7)
       // Sub-copy
       tl.from('.hero__blurb', { y: 24, opacity: 0, duration: 0.9, ease: 'power3.out' }, 0.85)
       // Scroll cue
       tl.from('.hero__scroll', { opacity: 0, y: 10, duration: 0.7 }, 1.4)
+      
+      // Parallax scroll transition for the 2.5D shader
+      if (glyphRef.current) {
+        gsap.to(glyphRef.current, {
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: true,
+          },
+          scale: 0.9,
+          y: 80,
+          opacity: 0,
+        })
+      }
     }, heroRef)
     return () => ctx.revert()
   }, [reduced])
@@ -84,9 +89,6 @@ export default function Hero() {
 
   return (
     <section className="hero" id="top" data-section="top" ref={heroRef} aria-label="Introduction">
-      {/* 2.5D Parallax Background */}
-      <SignalParallax reduced={reduced} />
-
       {/* Background grid */}
       <HeroGrid />
 
@@ -144,6 +146,20 @@ export default function Hero() {
               Get in touch
             </a>
           </div>
+        </div>
+
+        {/* Right: Technical Identity Portrait */}
+        <div
+          className="hero__instrument"
+          ref={glyphRef}
+          style={{
+            transform: `translate(${dx * 6}px, ${dy * 4}px)`,
+            transition: reduced ? 'none' : 'transform 0.95s cubic-bezier(0.2,0.8,0.2,1)',
+          }}
+          data-cursor="explore"
+        >
+          {/* Central 2.5D parallax portrait */}
+          <SignalParallax reduced={reduced} />
         </div>
       </div>
 
@@ -216,42 +232,38 @@ function SignalParallax({ reduced }) {
         varying vec2 vUv;
         uniform sampler2D textureImage;
         uniform sampler2D textureDepth;
-        uniform sampler2D textureNormal;
-        uniform sampler2D textureNoise;
         uniform vec2 mousePosition;
-        uniform float time;
-        float PI = 3.141592;
-
+        
+        // CONFIGURABLE PARAMETERS
+        const float PARALLAX_STRENGTH = 0.045;
+        const float LIGHT_STRENGTH = 0.5;
+        const float EDGE_FADE = 0.4;
+        
         void main () {
           vec4 texDepth = texture2D(textureDepth, vUv);
-          vec4 texNoise = texture2D(textureNoise, vUv + time*.05);
-          vec4 texNoise2 = texture2D(textureNoise, vUv*.1 + time*.1);
-          float depthVal = texDepth.r - .7;
-          float noiseVal = texNoise.r - .5;
-          float noiseVal2 = texNoise2.r - .5;
-          float distToCenter = pow(distance(vUv, vec2(.5,.5)), 4.0);
-          float distToMouse = 1.0 - smoothstep(0.0, 0.25, distance(mousePosition + vec2(.5, .5), vUv));
-          vec2 dispDepth = vUv + mousePosition * depthVal * .1;
-          vec2 dispWaves = vec2(noiseVal * distToCenter);
-          vec2 dispMouse = vec2(noiseVal2 * .10 * distToMouse);
-          vec4 texImage = texture2D(textureImage, dispDepth + dispWaves + dispMouse);
-          vec4 texNormal = texture2D(textureNormal, dispDepth + dispWaves + dispMouse);
-          vec4 particles = texture2D(textureNoise, dispWaves + vec2(vUv.x - sin(time * .5), vUv.y - sin(time)));
-          float thr1 = .05 + sin(time*4.0)*.05;
-          texImage.rgb *= smoothstep(thr1,thr1+.03,particles.r);
-          vec4 displacedDepth = texture2D(textureDepth, dispDepth + dispWaves + dispMouse);
-          vec4 smokeNoise1 = texture2D(textureNoise, dispDepth - vec2(time * .3));
-          texImage.r *= 1. + (displacedDepth.b * (40. + smokeNoise1.r) * pow(1. - vUv.y, 6.) * (1. + sin(time)) *.1);
-          vec4 smokeNoise2 = texture2D(textureNoise, dispDepth - vec2(time * .1, time * .5));
-          texImage.b *= 1. + (displacedDepth.g * (6. + sin(time * 5.)) * (.5 + smokeNoise2.r * (1. + sin(time) * .5)) * vUv.y);
-          float lighteningValue = texture2D(textureNoise, vec2(time*.1)).r;
-          lighteningValue = 1. - smoothstep(.6,.65,lighteningValue) * .3;
-          texImage.rg *= lighteningValue;
-          vec3 lightDirection = normalize(vec3(mousePosition.x, mousePosition.y, .3));
-          vec3 pixDirection = normalize(vec3(texNormal.r * 2. - 1., texNormal.b * 2. - 1., -texNormal.g * 2. + 1.));
-          float lightVal = dot(pixDirection, lightDirection);
-          texImage.rgb *= .9 + (distToMouse * lightVal * (1. - displacedDepth.g)) * (2. + sin(time)*.5);
-          gl_FragColor = vec4(texImage);
+          
+          // Normalized depth [-0.5, 0.5]
+          float depthVal = texDepth.r - 0.5;
+          
+          // Displacement based on mouse and depth
+          vec2 displacedUv = vUv + (mousePosition * depthVal * PARALLAX_STRENGTH);
+          
+          vec4 texImage = texture2D(textureImage, displacedUv);
+          
+          // Dynamic Lighting: simple dot-like product between mouse direction and depth
+          float lightIntensity = max(0.0, dot(mousePosition, vec2(0.5)) * depthVal * LIGHT_STRENGTH);
+          
+          // Push towards technical aesthetic with slight contrast/light
+          vec3 finalColor = texImage.rgb + (vec3(0.8, 1.0, 0.6) * lightIntensity);
+          
+          // Edge Fade: Soften edges to fade into black (which becomes transparent in screen mode)
+          float distToEdgeX = min(vUv.x, 1.0 - vUv.x);
+          float distToEdgeY = min(vUv.y, 1.0 - vUv.y);
+          float edgeMask = smoothstep(0.0, EDGE_FADE * 0.2, distToEdgeX) * smoothstep(0.0, EDGE_FADE * 0.2, distToEdgeY);
+          
+          finalColor *= edgeMask; // Fade to black at edges
+
+          gl_FragColor = vec4(finalColor, 1.0);
         }
       `
 
@@ -270,12 +282,10 @@ function SignalParallax({ reduced }) {
       `
 
       const loader = new THREE.TextureLoader()
-      loader.crossOrigin = 'anonymous'
+      const basePath = import.meta.env.BASE_URL || '/'
       const urls = [
-        'https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/halloween.jpg',
-        'https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/halloween-depth.jpg',
-        'https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/halloween-normal.jpg',
-        'https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/noiseTexture.jpg',
+        basePath + 'hero-shader/base.jpg',
+        basePath + 'hero-shader/depth.jpg'
       ]
       let loaded = 0
       const loadedTextures = []
@@ -284,20 +294,14 @@ function SignalParallax({ reduced }) {
         textures = loadedTextures
         textures[0].minFilter = THREE.LinearFilter
         textures[1].magFilter = textures[1].minFilter = THREE.LinearFilter
-        textures[2].magFilter = textures[2].minFilter = THREE.LinearFilter
-        textures[3].magFilter = textures[3].minFilter = THREE.LinearFilter
-        textures[3].wrapT = textures[3].wrapS = THREE.RepeatWrapping
 
         material = new THREE.RawShaderMaterial({
           transparent: true,
           vertexShader,
           fragmentShader,
           uniforms: {
-            time: { value: 5 },
             textureImage: { value: textures[0] },
             textureDepth: { value: textures[1] },
-            textureNormal: { value: textures[2] },
-            textureNoise: { value: textures[3] },
             mousePosition: { value: new THREE.Vector2(0.5, 0.5) },
           },
         })
@@ -315,10 +319,9 @@ function SignalParallax({ reduced }) {
       }))
 
       const resize = () => {
-        const width = window.innerWidth
-        const height = window.innerHeight
-        renderer.setSize(width, height, false)
-        camera.aspect = width / height
+        const rect = shell.getBoundingClientRect()
+        renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false)
+        camera.aspect = rect.width / Math.max(rect.height, 1)
         camera.updateProjectionMatrix()
         
         if (mesh) {
@@ -326,14 +329,18 @@ function SignalParallax({ reduced }) {
           const vFov = (camera.fov * Math.PI) / 180
           const planeHeightAtDistance = 2 * Math.tan(vFov / 2) * dist
           const planeWidthAtDistance = planeHeightAtDistance * camera.aspect
-          // Using 200x300 as the base mesh size
-          const scale = Math.max(planeWidthAtDistance / 200, planeHeightAtDistance / 300) * 1.1
+          // Since we want the artwork to act like 'cover' inside the container, we scale it
+          const scale = Math.max(planeWidthAtDistance / 200, planeHeightAtDistance / 300)
           mesh.scale.set(scale, scale, 1)
         }
       }
+      // Current logical pointer position for smooth lerp
+      const currentPointer = { x: 0, y: 0 }
       const move = (event) => {
-        target.x = (event.clientX / window.innerWidth) * 2 - 1
-        target.y = -(event.clientY / window.innerHeight) * 2 - 1
+        const rect = shell.getBoundingClientRect()
+        // Map mouse coordinates to [-1, 1] relative to the shell center
+        target.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+        target.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1)
       }
       const leave = () => { target.x = 0; target.y = 0 }
       const render = (time = 0) => {
@@ -341,7 +348,6 @@ function SignalParallax({ reduced }) {
         pointer.x += (target.x - pointer.x) * 0.07
         pointer.y += (target.y - pointer.y) * 0.07
         material.uniforms.mousePosition.value.set(pointer.x, pointer.y)
-        material.uniforms.time.value = time * 0.001
         renderer.render(scene, camera)
         if (!reduced) frame = requestAnimationFrame(render)
       }
@@ -368,5 +374,5 @@ function SignalParallax({ reduced }) {
     }
   }, [reduced])
 
-  return <div className="hero__shader-shell" ref={shellRef} aria-label="Interactive Halloween 2.5D parallax shader" />
+  return <div className="hero__shader-shell" ref={shellRef} aria-label="Interactive 2.5D Technical Portrait Shader" />
 }
