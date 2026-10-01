@@ -524,6 +524,12 @@ input, textarea { font: inherit; }
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  background: radial-gradient(
+    circle 800px at calc(var(--mouse-x, 0.5) * 100%) calc(var(--mouse-y, 0.5) * 100%), 
+    rgba(210, 255, 0, 0.04), 
+    transparent 50%
+  );
+  transition: background 0.1s ease-out;
 }
 
 .hero__grid-line {
@@ -559,7 +565,7 @@ input, textarea { font: inherit; }
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: 1fr min(45vw, 550px);
+  grid-template-columns: 1fr min(42vw, 680px); /* 42% width for the right column */
   align-items: center;
   gap: 60px;
   flex: 1;
@@ -679,12 +685,12 @@ input, textarea { font: inherit; }
 }
 .hero__cta--ghost:hover { border-color: rgba(232, 236, 226, 0.55); color: #e8ece2; }
 
-/* Instrument: right side */
+/* Instrument: right side (35-42% width, volumetric) */
 .hero__instrument {
   position: relative;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 4 / 5;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px; /* Let it grow slightly larger */
   margin-left: auto;
   will-change: transform;
   flex-shrink: 0;
@@ -694,17 +700,24 @@ input, textarea { font: inherit; }
 /* Parallax Shader Background */
 .hero__shader-shell {
   position: absolute;
-  inset: -5%; /* Bleed slightly outside the frame */
-  width: 110%;
-  height: 110%;
+  inset: -15%; /* Allow it to bleed significantly into the grid */
+  width: 130%;
+  height: 130%;
   overflow: hidden;
   z-index: 0;
-  pointer-events: auto; /* Let mouse interact with the canvas */
-  border-radius: 2px;
-  opacity: 0.85;
+  pointer-events: auto;
+  opacity: 1;
   mix-blend-mode: screen;
-  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 80%);
-  -webkit-mask-image: -webkit-radial-gradient(center, ellipse cover, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 80%);
+  /* Organic soft mask rather than a hard pill shape */
+  mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 70%);
+  -webkit-mask-image: -webkit-radial-gradient(center, circle cover, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 70%);
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.hero__shader-shell:hover {
+  /* Slightly expand the mask when hovering for interaction feedback */
+  mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 75%);
+  -webkit-mask-image: -webkit-radial-gradient(center, circle cover, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 75%);
 }
 
 .hero__shader-canvas {
@@ -2210,13 +2223,20 @@ input, textarea { font: inherit; }
   .hero { padding-top: 120px; }
   .hero__body {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
     gap: 8vh;
     padding: 6vh 0 3vh;
   }
+  .hero__content {
+    position: relative;
+    z-index: 2;
+  }
   .hero__instrument {
-    width: min(80vw, 360px);
+    position: relative;
+    width: 100%;
+    max-width: 450px;
     margin: 0 auto;
+    opacity: 0.9;
+    z-index: 0;
   }
   .hero__title { font-size: clamp(72px, 18vw, 130px); }
   .hero__blurb { font-size: 16px; max-width: 100%; margin-left: 0; }
