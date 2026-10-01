@@ -3,21 +3,6 @@ import gsap from 'gsap'
 import { profile } from '../../data/portfolio'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 
-// Radial data points orbiting the identity core
-const DATA_POINTS = [
-  { angle: -60, radius: 38, label: 'PYTHON', sub: '/ language', color: 'var(--acid)' },
-  { angle: 30,  radius: 42, label: 'DATA',   sub: '/ analysis', color: 'var(--acid)' },
-  { angle: 130, radius: 36, label: 'ML',     sub: '/ models',   color: 'var(--coral)' },
-]
-
-function polarToXY(angleDeg, radiusPct) {
-  const rad = (angleDeg * Math.PI) / 180
-  return {
-    x: 50 + radiusPct * Math.cos(rad),
-    y: 50 + radiusPct * Math.sin(rad),
-  }
-}
-
 export default function Hero() {
   const heroRef = useRef(null)
   const glyphRef = useRef(null)
@@ -25,7 +10,6 @@ export default function Hero() {
   const reduced = useReducedMotion()
 
   const [mouseNorm, setMouseNorm] = useState({ x: 0.5, y: 0.5 })
-  const [activePoint, setActivePoint] = useState(null)
   const [loaded, setLoaded] = useState(false)
 
   // Initial reveal animation
@@ -123,19 +107,19 @@ export default function Hero() {
             <span className="hero__status-dot" aria-hidden="true" />
             DATA SCIENCE · MACHINE LEARNING
           </p>
-          <h1 className="hero__title" aria-label="Find the signal">
+          <h1 className="hero__title" aria-label="Suyash Narawade">
             <span className="hero__title-line">
-              <span className="hero__title-word hero__title-word--outline">Find</span>
-              <span className="hero__title-word">&nbsp;the</span>
+              <span className="hero__title-word hero__title-word--outline">Suyash</span>
             </span>
             <span className="hero__title-line">
-              <span className="hero__title-word hero__title-word--serif">signal</span>
+              <span className="hero__title-word">Narawade</span>
               <span className="hero__title-word hero__title-word--period" aria-hidden="true">.</span>
             </span>
           </h1>
           <p className="hero__blurb">
-            I'm Suyash — a computer engineering student turning curiosity
-            into tools, clear analysis, and systems that work.
+            Computer Engineering student exploring Data Science, Machine Learning,
+            Python, and Analytics — turning curiosity into tools, clear analysis,
+            and systems that work.
           </p>
 
           <div className="hero__cta-row">
@@ -168,74 +152,9 @@ export default function Hero() {
             transition: reduced ? 'none' : 'transform 0.95s cubic-bezier(0.2,0.8,0.2,1)',
           }}
           data-cursor="explore"
-          aria-hidden="true"
         >
-          {/* SVG orbital system */}
-          <svg className="hero__svg" viewBox="0 0 100 100" fill="none">
-            {/* Orbit rings */}
-            <circle cx="50" cy="50" r="33" stroke="rgba(200,255,64,0.15)" strokeWidth="0.5" strokeDasharray="2 3" />
-            <circle cx="50" cy="50" r="22" stroke="rgba(200,255,64,0.22)" strokeWidth="0.4" />
-
-            {/* Connection lines to data points */}
-            {DATA_POINTS.map((dp) => {
-              const pos = polarToXY(dp.angle, dp.radius)
-              return (
-                <line
-                  key={dp.label}
-                  x1="50" y1="50"
-                  x2={pos.x} y2={pos.y}
-                  stroke={activePoint === dp.label ? dp.color : 'rgba(200,255,64,0.3)'}
-                  strokeWidth={activePoint === dp.label ? '0.6' : '0.35'}
-                  strokeDasharray="1.5 1.5"
-                  style={{ transition: 'stroke 0.3s, stroke-width 0.3s' }}
-                />
-              )
-            })}
-
-            {/* Outer scanner line */}
-            <line x1="50" y1="50" x2="83" y2="50" stroke="rgba(200,255,64,0.4)" strokeWidth="0.4" />
-            <circle cx="50" cy="50" r="33" stroke="rgba(200,255,64,0.35)" strokeWidth="0.35" className="hero__scan-ring" />
-          </svg>
-
-          {/* Core identity */}
-          <div className="hero__identity">
-            <span className="hero__identity-mark">SN</span>
-            <span className="hero__identity-sub">24</span>
-          </div>
-
-          {/* Data point nodes */}
-          {DATA_POINTS.map((dp) => {
-            const pos = polarToXY(dp.angle, dp.radius)
-            return (
-              <button
-                key={dp.label}
-                className={`hero__dp ${activePoint === dp.label ? 'hero__dp--active' : ''}`}
-                style={{
-                  left: `${pos.x}%`,
-                  top: `${pos.y}%`,
-                }}
-                onMouseEnter={() => setActivePoint(dp.label)}
-                onMouseLeave={() => setActivePoint(null)}
-                aria-label={`Signal: ${dp.label}`}
-              >
-                <span className="hero__dp-pip" />
-                <span className="hero__dp-label">{dp.label}</span>
-                <span className="hero__dp-sub">{dp.sub}</span>
-              </button>
-            )
-          })}
-
-          {/* Metadata readout */}
-          <div className="hero__readout" aria-hidden="true">
-            <div className="hero__readout-row">
-              <span>STATUS</span>
-              <strong>{activePoint ? `SIGNAL / ${activePoint}` : 'SCANNING'}</strong>
-            </div>
-            <div className="hero__readout-row">
-              <span>FIELD</span>
-              <strong>DATA + ML</strong>
-            </div>
-          </div>
+          {/* Central 2.5D parallax field */}
+          <SignalParallax reduced={reduced} />
         </div>
       </div>
 
@@ -264,4 +183,189 @@ function HeroGrid() {
       ))}
     </div>
   )
+}
+
+function SignalParallax({ reduced }) {
+  const shellRef = useRef(null)
+
+  useEffect(() => {
+    const shell = shellRef.current
+    if (!shell) return undefined
+
+    let cancelled = false
+    let dispose = () => {}
+
+    import('three').then((THREE) => {
+      if (cancelled) return
+
+      const canvas = document.createElement('canvas')
+      canvas.className = 'hero__shader-canvas'
+      canvas.setAttribute('aria-hidden', 'true')
+      shell.appendChild(canvas)
+
+      let renderer
+      try {
+        renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' })
+      } catch {
+        canvas.remove()
+        return
+      }
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
+
+      const scene = new THREE.Scene()
+      const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 20000)
+      camera.position.z = 260
+      const pointer = { x: 0, y: 0 }
+      const target = { x: 0, y: 0 }
+      let frame = 0
+      let mesh
+      let material
+      let textures = []
+
+      const fragmentShader = `
+        precision highp float;
+        varying vec2 vUv;
+        uniform sampler2D textureImage;
+        uniform sampler2D textureDepth;
+        uniform sampler2D textureNormal;
+        uniform sampler2D textureNoise;
+        uniform vec2 mousePosition;
+        uniform float time;
+        float PI = 3.141592;
+
+        void main () {
+          vec4 texDepth = texture2D(textureDepth, vUv);
+          vec4 texNoise = texture2D(textureNoise, vUv + time*.05);
+          vec4 texNoise2 = texture2D(textureNoise, vUv*.1 + time*.1);
+          float depthVal = texDepth.r - .7;
+          float noiseVal = texNoise.r - .5;
+          float noiseVal2 = texNoise2.r - .5;
+          float distToCenter = pow(distance(vUv, vec2(.5,.5)), 4.0);
+          float distToMouse = 1.0 - smoothstep(0.0, 0.25, distance(mousePosition + vec2(.5, .5), vUv));
+          vec2 dispDepth = vUv + mousePosition * depthVal * .1;
+          vec2 dispWaves = vec2(noiseVal * distToCenter);
+          vec2 dispMouse = vec2(noiseVal2 * .10 * distToMouse);
+          vec4 texImage = texture2D(textureImage, dispDepth + dispWaves + dispMouse);
+          vec4 texNormal = texture2D(textureNormal, dispDepth + dispWaves + dispMouse);
+          vec4 particles = texture2D(textureNoise, dispWaves + vec2(vUv.x - sin(time * .5), vUv.y - sin(time)));
+          float thr1 = .05 + sin(time*4.0)*.05;
+          texImage.rgb *= smoothstep(thr1,thr1+.03,particles.r);
+          vec4 displacedDepth = texture2D(textureDepth, dispDepth + dispWaves + dispMouse);
+          vec4 smokeNoise1 = texture2D(textureNoise, dispDepth - vec2(time * .3));
+          texImage.r *= 1. + (displacedDepth.b * (40. + smokeNoise1.r) * pow(1. - vUv.y, 6.) * (1. + sin(time)) *.1);
+          vec4 smokeNoise2 = texture2D(textureNoise, dispDepth - vec2(time * .1, time * .5));
+          texImage.b *= 1. + (displacedDepth.g * (6. + sin(time * 5.)) * (.5 + smokeNoise2.r * (1. + sin(time) * .5)) * vUv.y);
+          float lighteningValue = texture2D(textureNoise, vec2(time*.1)).r;
+          lighteningValue = 1. - smoothstep(.6,.65,lighteningValue) * .3;
+          texImage.rg *= lighteningValue;
+          vec3 lightDirection = normalize(vec3(mousePosition.x, mousePosition.y, .3));
+          vec3 pixDirection = normalize(vec3(texNormal.r * 2. - 1., texNormal.b * 2. - 1., -texNormal.g * 2. + 1.));
+          float lightVal = dot(pixDirection, lightDirection);
+          texImage.rgb *= .9 + (distToMouse * lightVal * (1. - displacedDepth.g)) * (2. + sin(time)*.5);
+          gl_FragColor = vec4(texImage);
+        }
+      `
+
+      const vertexShader = `
+        attribute vec3 position;
+        attribute vec2 uv;
+        uniform mat4 projectionMatrix;
+        uniform mat4 modelViewMatrix;
+        uniform mat3 normalMatrix;
+        varying vec2 vUv;
+
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `
+
+      const loader = new THREE.TextureLoader()
+      loader.crossOrigin = 'anonymous'
+      const urls = [
+        'https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/halloween.jpg',
+        'https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/halloween-depth.jpg',
+        'https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/halloween-normal.jpg',
+        'https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/noiseTexture.jpg',
+      ]
+      let loaded = 0
+      const loadedTextures = []
+      const start = () => {
+        if (cancelled || loaded < urls.length) return
+        textures = loadedTextures
+        textures[0].minFilter = THREE.LinearFilter
+        textures[1].magFilter = textures[1].minFilter = THREE.LinearFilter
+        textures[2].magFilter = textures[2].minFilter = THREE.LinearFilter
+        textures[3].magFilter = textures[3].minFilter = THREE.LinearFilter
+        textures[3].wrapT = textures[3].wrapS = THREE.RepeatWrapping
+
+        material = new THREE.RawShaderMaterial({
+          transparent: true,
+          vertexShader,
+          fragmentShader,
+          uniforms: {
+            time: { value: 5 },
+            textureImage: { value: textures[0] },
+            textureDepth: { value: textures[1] },
+            textureNormal: { value: textures[2] },
+            textureNoise: { value: textures[3] },
+            mousePosition: { value: new THREE.Vector2(0.5, 0.5) },
+          },
+        })
+        mesh = new THREE.Mesh(new THREE.PlaneGeometry(200, 200, 256, 256), material)
+        scene.add(mesh)
+        resize()
+        render()
+      }
+      urls.forEach((url, index) => loader.load(url, (texture) => {
+        loadedTextures[index] = texture
+        loaded += 1
+        start()
+      }))
+
+      const resize = () => {
+        const rect = shell.getBoundingClientRect()
+        renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false)
+        camera.aspect = rect.width / Math.max(rect.height, 1)
+        camera.updateProjectionMatrix()
+      }
+      const move = (event) => {
+        const rect = shell.getBoundingClientRect()
+        target.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+        target.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1)
+      }
+      const leave = () => { target.x = 0; target.y = 0 }
+      const render = (time = 0) => {
+        if (!mesh || !material) return
+        pointer.x += (target.x - pointer.x) * 0.07
+        pointer.y += (target.y - pointer.y) * 0.07
+        material.uniforms.mousePosition.value.set(pointer.x, pointer.y)
+        material.uniforms.time.value = time * 0.001
+        renderer.render(scene, camera)
+        if (!reduced) frame = requestAnimationFrame(render)
+      }
+
+      window.addEventListener('resize', resize)
+      shell.addEventListener('pointermove', move)
+      shell.addEventListener('pointerleave', leave)
+      dispose = () => {
+        cancelAnimationFrame(frame)
+        window.removeEventListener('resize', resize)
+        shell.removeEventListener('pointermove', move)
+        shell.removeEventListener('pointerleave', leave)
+        mesh?.geometry.dispose()
+        material?.dispose()
+        textures.forEach((texture) => texture.dispose())
+        renderer.dispose()
+        canvas.remove()
+      }
+    }).catch(() => {})
+
+    return () => {
+      cancelled = true
+      dispose()
+    }
+  }, [reduced])
+
+  return <div className="hero__shader-shell" ref={shellRef} aria-label="Interactive Halloween 2.5D parallax shader" />
 }
