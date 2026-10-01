@@ -512,9 +512,9 @@ input, textarea { font: inherit; }
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 70% at 72% 38%, rgba(200, 255, 64, 0.06), transparent),
-    radial-gradient(ellipse 40% 50% at 20% 80%, rgba(255, 122, 92, 0.04), transparent);
-  z-index: 0;
+    radial-gradient(ellipse 70% 80% at 50% 50%, transparent, rgba(14, 18, 16, 0.95)),
+    radial-gradient(ellipse 60% 70% at 72% 38%, rgba(200, 255, 64, 0.04), transparent);
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -558,9 +558,9 @@ input, textarea { font: inherit; }
 .hero__body {
   position: relative;
   z-index: 2;
-  display: grid;
-  grid-template-columns: 1fr min(40vw, 500px);
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   gap: 60px;
   flex: 1;
   padding: 8vh 0 4vh;
@@ -679,22 +679,17 @@ input, textarea { font: inherit; }
 }
 .hero__cta--ghost:hover { border-color: rgba(232, 236, 226, 0.55); color: #e8ece2; }
 
-/* Instrument: right side */
-.hero__instrument {
-  position: relative;
-  aspect-ratio: 1;
-  will-change: transform;
-  flex-shrink: 0;
-}
-
-/* Parallax Shader */
+/* Parallax Shader Background */
 .hero__shader-shell {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border-radius: 4px;
+  z-index: 0;
+  pointer-events: none; /* Let clicks pass through to the canvas */
+  opacity: 0.6; /* Blend nicely with the dark background */
+  mix-blend-mode: screen;
 }
 
 .hero__shader-canvas {

@@ -84,6 +84,9 @@ export default function Hero() {
 
   return (
     <section className="hero" id="top" data-section="top" ref={heroRef} aria-label="Introduction">
+      {/* 2.5D Parallax Background */}
+      <SignalParallax reduced={reduced} />
+
       {/* Background grid */}
       <HeroGrid />
 
@@ -141,20 +144,6 @@ export default function Hero() {
               Get in touch
             </a>
           </div>
-        </div>
-
-        {/* Right: Identity instrument */}
-        <div
-          className="hero__instrument"
-          ref={glyphRef}
-          style={{
-            transform: `translate(${dx * 12}px, ${dy * 9}px)`,
-            transition: reduced ? 'none' : 'transform 0.95s cubic-bezier(0.2,0.8,0.2,1)',
-          }}
-          data-cursor="explore"
-        >
-          {/* Central 2.5D parallax field */}
-          <SignalParallax reduced={reduced} />
         </div>
       </div>
 
@@ -312,7 +301,9 @@ function SignalParallax({ reduced }) {
             mousePosition: { value: new THREE.Vector2(0.5, 0.5) },
           },
         })
-        mesh = new THREE.Mesh(new THREE.PlaneGeometry(200, 200, 256, 256), material)
+        // The image is 2:3 aspect ratio (portrait)
+        // Match the mesh proportions so it's not squashed
+        mesh = new THREE.Mesh(new THREE.PlaneGeometry(200, 300, 128, 128), material)
         scene.add(mesh)
         resize()
         render()
@@ -324,15 +315,25 @@ function SignalParallax({ reduced }) {
       }))
 
       const resize = () => {
-        const rect = shell.getBoundingClientRect()
-        renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false)
-        camera.aspect = rect.width / Math.max(rect.height, 1)
+        const width = window.innerWidth
+        const height = window.innerHeight
+        renderer.setSize(width, height, false)
+        camera.aspect = width / height
         camera.updateProjectionMatrix()
+        
+        if (mesh) {
+          const dist = camera.position.z
+          const vFov = (camera.fov * Math.PI) / 180
+          const planeHeightAtDistance = 2 * Math.tan(vFov / 2) * dist
+          const planeWidthAtDistance = planeHeightAtDistance * camera.aspect
+          // Using 200x300 as the base mesh size
+          const scale = Math.max(planeWidthAtDistance / 200, planeHeightAtDistance / 300) * 1.1
+          mesh.scale.set(scale, scale, 1)
+        }
       }
       const move = (event) => {
-        const rect = shell.getBoundingClientRect()
-        target.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-        target.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1)
+        target.x = (event.clientX / window.innerWidth) * 2 - 1
+        target.y = -(event.clientY / window.innerHeight) * 2 - 1
       }
       const leave = () => { target.x = 0; target.y = 0 }
       const render = (time = 0) => {
@@ -346,13 +347,13 @@ function SignalParallax({ reduced }) {
       }
 
       window.addEventListener('resize', resize)
-      shell.addEventListener('pointermove', move)
-      shell.addEventListener('pointerleave', leave)
+      window.addEventListener('pointermove', move)
+      window.addEventListener('pointerleave', leave)
       dispose = () => {
         cancelAnimationFrame(frame)
         window.removeEventListener('resize', resize)
-        shell.removeEventListener('pointermove', move)
-        shell.removeEventListener('pointerleave', leave)
+        window.removeEventListener('pointermove', move)
+        window.removeEventListener('pointerleave', leave)
         mesh?.geometry.dispose()
         material?.dispose()
         textures.forEach((texture) => texture.dispose())
