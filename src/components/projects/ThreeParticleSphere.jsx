@@ -70,7 +70,11 @@ function Particles() {
 export default function ThreeParticleSphere() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'absolute', inset: 0, background: 'var(--bg-section-alt)' }}>
-      <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 2]}>
+      <Canvas 
+        camera={{ position: [0, 0, 5], fov: 45 }} 
+        dpr={[1, 2]}
+        fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-ghost)', fontStyle: 'italic', fontSize: '0.8rem' }}>[ Hardware Acceleration Disabled ]</div>}
+      >
         <ambientLight intensity={1} />
         <Particles />
       </Canvas>

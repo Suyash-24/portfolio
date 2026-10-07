@@ -693,7 +693,12 @@ export default function IceCubeCanvas() {
         visibility: visible ? 'visible' : 'hidden'
       }}
     >
-      <Canvas camera={{ position: [0, 0, 16], fov: 40 }} dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: "high-performance" }}>
+      <Canvas 
+        camera={{ position: [0, 0, 16], fov: 40 }} 
+        dpr={[1, 1.5]} 
+        gl={{ antialias: true }}
+        fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-ghost)', fontStyle: 'italic' }}>[ 3D Hardware Acceleration Disabled ]</div>}
+      >
         <fog attach="fog" args={['#c3c6d2', 12, 34]} />
 
         <ambientLight intensity={0.4} color="#dfe0ea" />
