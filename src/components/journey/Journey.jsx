@@ -1,133 +1,124 @@
-import { useRef, useLayoutEffect } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import React, { useRef } from 'react'
+import { motion, useScroll, useTransform } from 'motion/react'
 import { journey } from '../../data/portfolio'
-import { useReducedMotion } from '../../hooks/useReducedMotion'
 
-gsap.registerPlugin(ScrollTrigger)
+
 
 export default function Journey() {
-  const sectionRef = useRef(null)
-  const reduced = useReducedMotion()
+  const containerRef = useRef(null)
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start center", "end center"]
+  })
 
-  useLayoutEffect(() => {
-    if (reduced) return
-    const ctx = gsap.context(() => {
-      // Vertical fill line
-      gsap.fromTo(
-        '.journey__line-fill',
-        { scaleY: 0 },
-        {
-          scaleY: 1,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 70%',
-            end: 'bottom 55%',
-            scrub: true,
-          },
-        }
-      )
-
-      // Each step slides in
-      gsap.utils.toArray('.journey__step').forEach((step, i) => {
-        gsap.fromTo(
-          step,
-          { x: 44, opacity: 0 },
-          {
-            x: 0,
-            opacity: 1,
-            duration: 0.9,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: step,
-              start: 'top 82%',
-              end: 'top 58%',
-              scrub: false,
-              once: true,
-            },
-          }
-        )
-      })
-
-      // Chapter numbers count in
-      gsap.utils.toArray('.journey__chapter').forEach((el) => {
-        gsap.from(el, {
-          opacity: 0,
-          y: 16,
-          duration: 0.6,
-          ease: 'power2.out',
-          scrollTrigger: { trigger: el, start: 'top 85%', once: true },
-        })
-      })
-    }, sectionRef)
-    return () => ctx.revert()
-  }, [reduced])
+  // Scale the height of the glowing line based on scroll
+  const lineHeight = useTransform(scrollYProgress, [0, 1], ["0%", "100%"])
 
   return (
-    <section
-      className="journey scene"
-      id="journey"
-      data-section="journey"
-      ref={sectionRef}
-      aria-label="Career trajectory"
-    >
-      <div className="scene__label">
-        <span>04 / TRAJECTORY</span>
-        <span>The work is still becoming.</span>
+    <section id="journey" className="section" data-section="journey">
+
+      {/* Section header */}
+      <div className="section-head reveal">
+        <span className="section-label">trajectory_</span>
+        <span className="section-meta">Timeline / 03</span>
       </div>
 
-      <div className="journey__layout">
-        {/* Left column: title */}
-        <div className="journey__title-col">
-          <p className="eyebrow">A MOVING TARGET</p>
-          <h2 className="journey__h2">
-            Next<br />
-            <em>chapter.</em>
-          </h2>
-          <p className="journey__sub">
-            Curiosity is a direction, not a finished label.
-            Here's the path I'm on.
-          </p>
+      {/* Literal Treasure Map Container */}
+      <div ref={containerRef} className="treasure-map-board relative w-full mt-16" style={{ height: '1400px' }}>
+        
+        {/* SVG Winding Dotted Path */}
+        <svg className="absolute inset-0 w-full h-full block" preserveAspectRatio="none" viewBox="0 0 1000 1400">
+          <path
+            d="M 200 140 C 600 140, 800 240, 800 420 C 800 600, 300 500, 200 700 C 100 900, 100 800, 300 980 C 500 1100, 500 1200, 500 1330"
+            fill="none"
+            stroke="var(--ink-blue)"
+            strokeWidth="4"
+            strokeDasharray="8 8"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
 
-          {/* Current phase indicator */}
-          <div className="journey__now-badge">
-            <span className="journey__now-dot" aria-hidden="true" />
-            <span>ACTIVELY BUILDING</span>
-          </div>
-        </div>
+        {/* Scroll Reveal Curtain for the Line */}
+        <motion.div 
+          className="absolute inset-0 w-full bg-[var(--bg-section)] origin-bottom z-0"
+          style={{ 
+            height: useTransform(scrollYProgress, [0, 1], ["100%", "0%"]),
+            top: 'auto',
+            bottom: 0
+          }}
+        />
 
-        {/* Right column: timeline */}
-        <div className="journey__timeline">
-          {/* Vertical line */}
-          <div className="journey__line-track" aria-hidden="true">
-            <div className="journey__line-fill" />
-          </div>
+        {journey.map((j, index) => {
+          // Exact coordinates for 1400px tall map
+          const points = [
+            { y: 140, x: 20, align: 'right',   scrollTrigger: 0.10 },
+            { y: 420, x: 80, align: 'left',    scrollTrigger: 0.30 },
+            { y: 700, x: 20, align: 'right',   scrollTrigger: 0.50 },
+            { y: 980, x: 30, align: 'right',   scrollTrigger: 0.70 },
+            { y: 1330, x: 50, align: 'center', scrollTrigger: 0.95 },
+          ]
+          const pos = points[index]
+          const isFinal = index === journey.length - 1
 
-          {/* Steps */}
-          <div className="journey__steps">
-            {journey.map((item, i) => (
-              <article key={item.year} className="journey__step" aria-label={`${item.year}: ${item.label}`}>
-                {/* Dot */}
-                <div className={`journey__dot ${item.year === 'NOW' ? 'journey__dot--now' : ''}`} aria-hidden="true">
-                  <span className="journey__chapter">{item.chapter}</span>
+          // Drive card appearance strictly mathematically off scrollYProgress
+          const opacity = useTransform(scrollYProgress, [pos.scrollTrigger - 0.05, pos.scrollTrigger], [0, 1])
+          const scale = useTransform(scrollYProgress, [pos.scrollTrigger - 0.05, pos.scrollTrigger], [0.5, 1])
+
+          return (
+            <div key={j.chapter}>
+              {/* The EXACT Point on the Line */}
+              <motion.div 
+                className="absolute z-10"
+                style={{ 
+                  top: pos.y, 
+                  left: `${pos.x}%`, 
+                  transform: 'translate(-50%, -50%)',
+                  opacity,
+                  scale
+                }}
+              >
+                <div className="map-marker relative flex justify-center items-center">
+                  {isFinal ? (
+                    <span className="text-red-500 font-bold text-4xl pirate-x" style={{ textShadow: '0 0 15px rgba(239,68,68,0.6)' }}>✖</span>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-blue-600 border-[4px] border-[var(--bg-section)] shadow-[0_0_10px_rgba(37,99,235,0.8)]"></div>
+                  )}
                 </div>
+              </motion.div>
 
-                <div className="journey__step-body">
-                  <div className="journey__step-head">
-                    <time className="journey__year" dateTime={item.year === 'NOW' ? '2026' : item.year}>
-                      {item.year}
-                    </time>
-                    <span className="journey__phase">{item.phase}</span>
+              {/* The Map Legend / Card positioned relative to the point */}
+              <motion.div
+                className={`absolute w-[280px] md:w-[320px] z-20 ${
+                  pos.align === 'left' ? 'pr-8 -translate-x-full' : 
+                  pos.align === 'right' ? 'pl-8' : 
+                  '-translate-x-1/2 pt-10'
+                }`}
+                style={{ 
+                  top: pos.y, 
+                  left: `${pos.x}%`,
+                  marginTop: pos.align !== 'center' ? '-40px' : '0',
+                  opacity,
+                  scale
+                }}
+              >
+                <div className={`map-card p-4 bg-[var(--bg-section)]/95 backdrop-blur-md border-2 ${isFinal ? 'border-red-500/30' : 'border-[var(--ink-blue)]/20'} rounded-lg shadow-2xl transition-transform hover:-translate-y-1`}>
+                  <div className={`${isFinal ? 'text-red-500' : 'text-[var(--ink-blue)]'} font-bold font-mono text-sm tracking-widest mb-1`}>
+                    {j.year}
                   </div>
-                  <h3 className="journey__label">{item.label}</h3>
-                  <p className="journey__detail">{item.detail}</p>
+                  <h3 className="text-xl font-black text-[var(--text-primary)] leading-tight mb-2 uppercase tracking-tighter">
+                    {j.label}
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    {j.detail}
+                  </p>
                 </div>
-              </article>
-            ))}
-          </div>
-        </div>
+              </motion.div>
+            </div>
+          )
+        })}
       </div>
+
     </section>
   )
 }

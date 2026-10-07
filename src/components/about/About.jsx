@@ -1,131 +1,218 @@
-import { useState } from 'react'
-import { bio, profile } from '../../data/portfolio'
+import React, { useEffect, useRef } from 'react'
+import anime from 'animejs'
+import { profile, bio } from '../../data/portfolio'
 
-const CONCEPT_DATA = {
-  Python: {
-    visual: 'code',
-    content: 'def build():\n  return signal',
-    color: 'var(--acid)',
-  },
-  Data: {
-    visual: 'bars',
-    content: [46, 72, 58, 86, 65],
-    color: 'var(--acid)',
-  },
-  'Machine Learning': {
-    visual: 'flow',
-    content: 'input → model → insight',
-    color: 'var(--coral)',
-  },
-  Automation: {
-    visual: 'flow',
-    content: 'fetch → parse → repeat',
-    color: 'var(--acid)',
-  },
-  Building: {
-    visual: 'blocks',
-    content: null,
-    color: 'var(--coral)',
-  },
-}
+// ──────────────────────────────────────────────────────────────────────────────
+// ABOUT — Based on bermawy.com aesthetic:
+//  • Light gray (#EBEBEB) background with graph-paper grid
+//  • Lowercase "hi there_" style section header with blue underline
+//  • 2-column layout: bio text left, dossier card right
+//  • Stats row with Gertix '+' crosshair dashed grid
+//  • Skill pill tags (rounded oval capsules)
+// ──────────────────────────────────────────────────────────────────────────────
+const stats = [
+  { val: '4+',    label: 'Projects Built' },
+  { val: '2022',  label: 'Started Coding' },
+  { val: 'B.E.',  label: 'Degree Completed' },
+  { val: 'Open',  label: 'For Roles' },
+]
 
-function ConceptArtifact({ concept }) {
-  const data = CONCEPT_DATA[concept]
-  if (!data) return null
-  return (
-    <span className="about__artifact" style={{ '--artifact-color': data.color }}>
-      {data.visual === 'code' && <code className="about__artifact-code">{data.content}</code>}
-      {data.visual === 'bars' && (
-        <span className="about__artifact-bars" aria-hidden="true">
-          {data.content.map((h, i) => (
-            <i key={i} style={{ height: `${h}%` }} />
-          ))}
-        </span>
-      )}
-      {data.visual === 'flow' && <span className="about__artifact-flow">{data.content}</span>}
-      {data.visual === 'blocks' && (
-        <span className="about__artifact-blocks" aria-hidden="true">
-          <i /><i /><i />
-        </span>
-      )}
-    </span>
-  )
-}
+const dossierRows = [
+  { key: 'Location',   val: 'Pune, Maharashtra, India' },
+  { key: 'Coords',     val: '18°31′N / 73°51′E' },
+  { key: 'Degree',     val: 'B.E. Computer Engineering' },
+  { key: 'Focus',      val: 'Data Science · ML · Python' },
+  { key: 'Status',     val: 'Open to opportunities' },
+  { key: 'Email',      val: 'iamnarawadesuyash@gmail.com' },
+]
 
-function Concept({ label }) {
-  const [active, setActive] = useState(false)
-  return (
-    <button
-      className={`about__concept ${active ? 'about__concept--active' : ''}`}
-      onMouseEnter={() => setActive(true)}
-      onMouseLeave={() => setActive(false)}
-      onFocus={() => setActive(true)}
-      onBlur={() => setActive(false)}
-      aria-label={`Explore ${label}`}
-    >
-      <span>{label}</span>
-      {active && <ConceptArtifact concept={label} />}
-    </button>
-  )
-}
+const skillRows = [
+  { skill: 'Python',          cat: 'Language',   level: 'Proficient' },
+  { skill: 'Data Analysis',   cat: 'Practice',   level: 'Proficient' },
+  { skill: 'Machine Learning',cat: 'Practice',   level: 'Learning' },
+  { skill: 'Math & Stats',    cat: 'Foundation', level: 'Learning' },
+  { skill: 'Automation',      cat: 'Systems',    level: 'Proficient' },
+  { skill: 'Backend Logic',   cat: 'Systems',    level: 'Proficient' },
+]
 
 export default function About() {
+  const sectionRef = useRef(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        // Words sliding up
+        anime({
+          targets: '.anim-word',
+          translateY: [40, 0],
+          opacity: [0, 1],
+          delay: anime.stagger(30, { start: 100 }),
+          easing: 'easeOutCubic',
+          duration: 700
+        })
+
+        // Stats staggering in
+        // Stats staggering in
+        anime({
+          targets: '.stat-cell',
+          translateY: [30, 0],
+          opacity: [0, 1],
+          delay: anime.stagger(100, { start: 400 }),
+          easing: 'easeOutExpo',
+          duration: 900
+        })
+
+        // Lower section staggering in
+        anime({
+          targets: '.about-lower-anim',
+          translateY: [30, 0],
+          opacity: [0, 1],
+          delay: anime.stagger(100, { start: 600 }),
+          easing: 'easeOutExpo',
+          duration: 900
+        })
+      } else {
+        // Out animations
+        anime({
+          targets: '.anim-word',
+          translateY: [0, 40],
+          opacity: [1, 0],
+          easing: 'easeInCubic',
+          duration: 300,
+          delay: 0
+        })
+        anime({
+          targets: '.stat-cell',
+          translateY: [0, 30],
+          opacity: [1, 0],
+          easing: 'easeInExpo',
+          duration: 300,
+          delay: 0
+        })
+        anime({
+          targets: '.about-lower-anim',
+          translateY: [0, 30],
+          opacity: [1, 0],
+          easing: 'easeInExpo',
+          duration: 300,
+          delay: 0
+        })
+      }
+    }, { threshold: 0.25 })
+
+    if (sectionRef.current) observer.observe(sectionRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  const leadText = "Computer Engineering graduate turning raw data into decisions, and curiosity into code."
+
   return (
-    <section className="about scene" id="about" data-section="about" aria-label="About Suyash">
-      <div className="scene__label">
-        <span>01 / PROFILE</span>
-        <span>A little context before the work.</span>
+    <section id="about" className="section" data-section="about" ref={sectionRef}>
+
+      {/* Section header — Bermawy: lowercase label + blue rule */}
+      <div className="section-head reveal">
+        <span className="section-label">hi there_</span>
+        <span className="section-meta">Profile / 01</span>
       </div>
 
-      <div className="about__layout">
-        {/* Left column — heading */}
-        <div className="about__heading">
-          <p className="eyebrow">THE HUMAN VARIABLE</p>
-          <h2 className="about__h2">
-            Curious<br />
-            <em>by default.</em>
-          </h2>
-          <div className="about__index" aria-hidden="true">[ 01—05 ]</div>
-        </div>
+      {/* Lead statement - Animated word by word */}
+      <p className="about-hero-line">
+        {leadText.split(' ').map((word, i) => (
+          <span key={i} style={{ display: 'inline-block', overflow: 'hidden', paddingRight: '0.25em', paddingBottom: '0.1em' }}>
+            <span className="anim-word" style={{ display: 'inline-block', transform: 'translateY(40px)', opacity: 0 }}>
+              {word}
+            </span>
+          </span>
+        ))}
+      </p>
 
-        {/* Right column — copy */}
-        <div className="about__copy">
-          <p className="about__lead">{bio.lead}</p>
-          {bio.paragraphs.map((p, i) => <p key={i}>{p}</p>)}
-
-          <p className="about__concepts-line">
-            Currently orbiting{' '}
-            {bio.concepts.map((c, i) => (
-              <span key={c}>
-                <Concept label={c} />
-                {i < bio.concepts.length - 1 ? ', ' : '.'}
-              </span>
-            ))}
-          </p>
-
-          <a className="about__resume" href={profile.resume} download aria-label="Download resume PDF">
-            Download resume
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </a>
-        </div>
-      </div>
-
-      {/* Identity row */}
-      <div className="about__identity" role="list">
-        {[
-          { label: 'ROLE', value: 'Student / Builder' },
-          { label: 'FOCUS', value: 'Data + ML + Systems' },
-          { label: 'STACK', value: 'Python / Git / SQL' },
-          { label: 'OPEN TO', value: 'Internships · Entry-level' },
-        ].map(({ label, value }) => (
-          <div key={label} className="about__identity-item" role="listitem">
-            <span>{label}</span>
-            <strong>{value}</strong>
+      {/* Stats row — Gertix 4-col dashed grid with + crosshairs */}
+      <div className="stats-grid">
+        {stats.map((s) => (
+          <div key={s.label} className="stat-cell" style={{ opacity: 0, transform: 'translateY(30px)' }}>
+            <div className="stat-val">{s.val}</div>
+            <div className="stat-label">{s.label}</div>
           </div>
         ))}
       </div>
+
+      {/* 2-column grid */}
+      <div className="about-grid">
+
+        {/* Left — bio paragraphs + pill tags */}
+        <div className="about-bio">
+          {bio.paragraphs.map((p, i) => (
+            <p key={i} className="about-lower-anim" style={{ opacity: 0 }}>{p}</p>
+          ))}
+
+          <div className="tag-group about-lower-anim" style={{ marginTop: '2rem', opacity: 0 }}>
+            {bio.concepts.map((c) => (
+              <span key={c} className="tag">{c}</span>
+            ))}
+          </div>
+
+          {/* Actions — split CTA */}
+          <div className="about-actions about-lower-anim" style={{ opacity: 0 }}>
+            <div className="hero-cta-group">
+              <a
+                href={profile.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-label"
+                style={{ display: 'inline-block' }}
+              >
+                GITHUB
+              </a>
+              <a
+                href={profile.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-arrow"
+                aria-label="GitHub"
+              >
+                ↗
+              </a>
+            </div>
+            <div className="hero-cta-group">
+              <a
+                href={profile.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-label"
+                style={{ display: 'inline-block' }}
+              >
+                LINKEDIN
+              </a>
+              <a
+                href={profile.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-arrow"
+                aria-label="LinkedIn"
+              >
+                ↗
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Right — dossier + skill table */}
+        <div>
+
+          {/* Dossier spec card */}
+          <div className="dossier-card about-lower-anim" style={{ opacity: 0 }}>
+            {dossierRows.map((row) => (
+              <div key={row.key} className="dossier-row">
+                <span className="dossier-key">{row.key}</span>
+                <span className="dossier-val">{row.val}</span>
+              </div>
+            ))}
+          </div>
+
+
+        </div>
+      </div>
+
     </section>
   )
 }

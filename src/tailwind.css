@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/*
+  Gertix Studio & Bermawy Color System for Tailwind
+*/
+@theme inline {
+  --color-neutral-100: #f2f2f2;
+  --color-neutral-200: #e8ebeb;
+  --color-neutral-300: #9bacae;
+  --color-neutral-400: #71797a;
+  --color-neutral-500: #494f52;
+  --color-neutral-600: #17181a;
+  
+  --color-bermawy-blue: #345aaa;
+  --color-bermawy-hover: #264687;
+  --color-bermawy-wash: #e6f3ff;
+  --color-canvas: #f9f9f9;
+}

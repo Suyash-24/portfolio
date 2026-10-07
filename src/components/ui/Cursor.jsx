@@ -1,66 +1,65 @@
-import { useEffect, useRef, useState } from 'react'
-import gsap from 'gsap'
+import { useEffect, useRef } from 'react'
 
+// Custom cursor — ink blue dot + ring (matches new design system)
 export default function Cursor() {
-  const dotRef = useRef(null)
+  const dotRef  = useRef(null)
   const ringRef = useRef(null)
-  const [state, setState] = useState('default') // default | link | project | explore | email
+  let mouseX = 0, mouseY = 0
+  let ringX = 0,  ringY = 0
 
   useEffect(() => {
-    if (window.matchMedia('(pointer: coarse)').matches) return
-
-    const dot = dotRef.current
+    const dot  = dotRef.current
     const ring = ringRef.current
+    if (!dot || !ring) return
 
-    // Initial visibility
-    gsap.set([dot, ring], { opacity: 0 })
+    const onMove = (e) => {
+      mouseX = e.clientX
+      mouseY = e.clientY
+      dot.style.left = mouseX + 'px'
+      dot.style.top  = mouseY + 'px'
+    }
+    window.addEventListener('mousemove', onMove)
 
-    let isVisible = false
+    // Lag ring behind dot
+    let animId
+    const loop = () => {
+      ringX += (mouseX - ringX) * 0.12
+      ringY += (mouseY - ringY) * 0.12
+      ring.style.left = ringX + 'px'
+      ring.style.top  = ringY + 'px'
+      animId = requestAnimationFrame(loop)
+    }
+    animId = requestAnimationFrame(loop)
 
-    const enter = () => {
-      if (!isVisible) {
-        isVisible = true
-        gsap.to([dot, ring], { opacity: 1, duration: 0.25 })
+    // Ring expand on hover
+    const handleEnter = (e) => {
+      const el = e.target
+      if (el.tagName === 'A' || el.tagName === 'BUTTON' || el.closest('a') || el.closest('button')) {
+        ring.style.width  = '44px'
+        ring.style.height = '44px'
+        ring.style.borderColor = 'rgba(29,78,216,0.7)'
       }
     }
-
-    const move = (e) => {
-      enter()
-      gsap.to(dot, { x: e.clientX, y: e.clientY, duration: 0.08, ease: 'power3.out' })
-      gsap.to(ring, { x: e.clientX, y: e.clientY, duration: 0.55, ease: 'power3.out' })
+    const handleLeave = () => {
+      ring.style.width  = '26px'
+      ring.style.height = '26px'
+      ring.style.borderColor = 'rgba(29,78,216,0.45)'
     }
-
-    const over = (e) => {
-      const target = e.target.closest('a, button, [data-cursor], input, textarea')
-      if (!target) { setState('default'); return }
-      const type = target.dataset.cursor
-      if (type === 'project') setState('project')
-      else if (type === 'email') setState('email')
-      else if (type === 'explore') setState('explore')
-      else setState('link')
-    }
-
-    const out = (e) => {
-      const from = e.target.closest('a, button, [data-cursor], input, textarea')
-      if (!from || from.contains(e.relatedTarget)) return
-      setState('default')
-    }
-
-    window.addEventListener('mousemove', move)
-    document.addEventListener('mouseover', over)
-    document.addEventListener('mouseout', out)
+    document.addEventListener('mouseover', handleEnter)
+    document.addEventListener('mouseout',  handleLeave)
 
     return () => {
-      window.removeEventListener('mousemove', move)
-      document.removeEventListener('mouseover', over)
-      document.removeEventListener('mouseout', out)
+      window.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseover', handleEnter)
+      document.removeEventListener('mouseout',  handleLeave)
+      cancelAnimationFrame(animId)
     }
   }, [])
 
   return (
     <>
-      <div className={`c-cursor-dot c-cursor-dot--${state}`} ref={dotRef} />
-      <div className={`c-cursor-ring c-cursor-ring--${state}`} ref={ringRef} />
+      <div ref={dotRef}  className="cursor-dot"  aria-hidden="true" />
+      <div ref={ringRef} className="cursor-ring" aria-hidden="true" />
     </>
   )
 }

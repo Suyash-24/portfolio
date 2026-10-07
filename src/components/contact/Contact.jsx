@@ -1,148 +1,215 @@
-import { useEffect, useRef, useState } from 'react'
-import gsap from 'gsap'
+import { useState } from 'react'
+import { motion } from 'motion/react'
 import { profile } from '../../data/portfolio'
 
+// ──────────────────────────────────────────────────────────────────────────────
+// CONTACT — Gertix dark footer style:
+//  • Dark (#0c0d10) background
+//  • Green matrix ASCII art background
+//  • Large email display
+//  • Copy-to-clipboard button
+//  • 4-column footer grid (Bermawy)
+//  • Bottom copyright bar
+// ──────────────────────────────────────────────────────────────────────────────
+
+// ASCII matrix art — Gertix footer style
+const MATRIX = `010101010001010010110101001010010101001010010101001001010010101001010
+101010010101001011010100101001010100101001010100100101001010100101010
+001010100101010010110101001010010101001010010101001001010010101001010
+010100101010010110101001010010101001010010101001001010010101001010100`
+
 export default function Contact() {
-  const sectionRef = useRef(null)
-  const fieldRef = useRef(null)
-  const emailRef = useRef(null)
-  const nearRef = useRef(false)
-  const [near, setNear] = useState(false)
+  const [copied, setCopied] = useState(false)
 
-  useEffect(() => {
-    const section = sectionRef.current
-    const field = fieldRef.current
-    if (!section || !field || window.matchMedia('(pointer: coarse)').matches) return
-
-    const moveX = gsap.quickTo(field, 'x', { duration: 0.7, ease: 'power3.out' })
-    const moveY = gsap.quickTo(field, 'y', { duration: 0.7, ease: 'power3.out' })
-
-    const onMove = (e) => {
-      const rect = section.getBoundingClientRect()
-      moveX(e.clientX - rect.left - rect.width / 2)
-      moveY(e.clientY - rect.top - rect.height / 2)
-
-      const emailEl = emailRef.current?.getBoundingClientRect()
-      if (emailEl) {
-        const dist = Math.hypot(
-          e.clientX - (emailEl.left + emailEl.width / 2),
-          e.clientY - (emailEl.top + emailEl.height / 2)
-        )
-        const isNear = dist < 280
-        if (nearRef.current !== isNear) {
-          nearRef.current = isNear
-          setNear(isNear)
-        }
-      }
-    }
-
-    const onLeave = () => {
-      nearRef.current = false
-      setNear(false)
-      moveX(0)
-      moveY(0)
-    }
-
-    section.addEventListener('pointermove', onMove)
-    section.addEventListener('pointerleave', onLeave)
-    return () => {
-      section.removeEventListener('pointermove', onMove)
-      section.removeEventListener('pointerleave', onLeave)
-    }
-  }, [])
+  const handleCopy = () => {
+    navigator.clipboard.writeText(profile.email).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    })
+  }
 
   return (
-    <section
-      className={`contact ${near ? 'contact--near' : ''}`}
-      id="contact"
-      data-section="contact"
-      ref={sectionRef}
-      aria-label="Contact"
-    >
-      {/* Background grid */}
-      <div className="contact__grid" aria-hidden="true" />
-      {/* Cursor field glow */}
-      <div className="contact__field" ref={fieldRef} aria-hidden="true" />
+    <section id="contact" className="contact-section" data-section="contact">
 
-      <div className="contact__top">
-        <span>05 / CONTACT</span>
-        <span>LET'S FIND THE NEXT SIGNAL</span>
+      {/* Matrix background — Gertix footer */}
+      <div className="contact-matrix" aria-hidden="true">{MATRIX}</div>
+
+      {/* Section header */}
+      <div className="contact-head reveal">
+        <span className="section-label">get in touch_</span>
+        <span className="section-meta">Contact / 04</span>
       </div>
 
-      <div className="contact__main">
-        <p className="eyebrow contact__eyebrow">
-          <span className="contact__dot" aria-hidden="true" />
-          OPEN TO OPPORTUNITIES
+      {/* Lead */}
+      <div className="reveal">
+        <p style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.78rem',
+          lineHeight: '1.8',
+          color: 'rgba(235,235,235,0.55)',
+          maxWidth: '52ch',
+          marginBottom: '0',
+        }}>
+          I'm actively looking for internships and entry-level opportunities
+          in Data Science, Analytics, and ML. If you have a role or project
+          that fits — I'd love to hear from you.
         </p>
 
-        <h2 className="contact__h2">
-          Have a<br />
-          <em>question?</em>
-        </h2>
+        <div className="contact-email-display">{profile.email}</div>
 
-        <a
-          className="contact__email"
-          href={`mailto:${profile.email}`}
-          ref={emailRef}
-          data-cursor="email"
-          aria-label={`Send email to ${profile.email}`}
-          onMouseEnter={() => setNear(true)}
-          onMouseLeave={() => setNear(false)}
-          onFocus={() => setNear(true)}
-          onBlur={() => setNear(false)}
+        <motion.button
+          className="contact-copy-btn"
+          onClick={handleCopy}
+          aria-label="Copy email address"
+          whileHover={{ scale: 1.05, y: -2, backgroundColor: 'rgba(255,255,255,0.1)' }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          <span className="contact__email-text">{profile.email}</span>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-          </svg>
-        </a>
-
-        <p className="contact__note">
-          For internships, entry-level roles, collaborations,
-          or an interesting problem worth unpacking.
-        </p>
+          {copied ? '✓ COPIED' : '[ COPY EMAIL ]'}
+        </motion.button>
       </div>
 
-      <div className="contact__footer">
-        <div className="contact__socials">
+      {/* Direct links — split CTAs */}
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '4rem' }} className="reveal reveal-delay-1">
+        <motion.div 
+          className="hero-cta-group"
+          whileHover={{ scale: 1.05, y: -4 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        >
           <a
-            href={profile.github}
-            target="_blank"
-            rel="noreferrer"
-            data-cursor="link"
-            aria-label="GitHub profile"
+            href={`mailto:${profile.email}`}
+            className="btn-label dark"
+            style={{ display: 'inline-block', background: 'rgba(255,255,255,0.08)', color: '#fff' }}
           >
-            GitHub
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-            </svg>
+            SEND EMAIL
+          </a>
+          <a
+            href={`mailto:${profile.email}`}
+            className="btn-arrow dark"
+            aria-label="Send email"
+          >
+            →
+          </a>
+        </motion.div>
+
+        <motion.div 
+          className="hero-cta-group"
+          whileHover={{ scale: 1.05, y: -4 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        >
+          <a
+            href={profile.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-label dark"
+            style={{ display: 'inline-block', background: 'rgba(255,255,255,0.08)', color: '#fff' }}
+          >
+            LINKEDIN
           </a>
           <a
             href={profile.linkedin}
             target="_blank"
-            rel="noreferrer"
-            data-cursor="link"
-            aria-label="LinkedIn profile"
+            rel="noopener noreferrer"
+            className="btn-arrow dark"
+            aria-label="LinkedIn"
           >
-            LinkedIn
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-            </svg>
+            ↗
           </a>
-        </div>
-        <a
-          href="#top"
-          className="contact__back"
-          data-cursor="link"
-          aria-label="Return to top of page"
+        </motion.div>
+
+        <motion.div 
+          className="hero-cta-group"
+          whileHover={{ scale: 1.05, y: -4 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          Return to top
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
-          </svg>
-        </a>
-        <span className="contact__copy">© 2026 / SUYASH NARAWADE</span>
+          <a
+            href={profile.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-label dark"
+            style={{ display: 'inline-block', background: 'rgba(255,255,255,0.08)', color: '#fff' }}
+          >
+            GITHUB
+          </a>
+          <a
+            href={profile.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-arrow dark"
+            aria-label="GitHub"
+          >
+            ↗
+          </a>
+        </motion.div>
       </div>
+
+      {/* 4-column footer grid — Bermawy */}
+      <div className="footer-grid reveal reveal-delay-2">
+        <div>
+          <div className="footer-col-title">Navigation</div>
+          <ul className="footer-col-links">
+            {['about', 'work', 'journey', 'contact'].map((id) => (
+              <li key={id}>
+                <a
+                  href={`#${id}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                >
+                  {id.charAt(0).toUpperCase() + id.slice(1)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <div className="footer-col-title">Connect</div>
+          <ul className="footer-col-links">
+            <li><a href={profile.github} target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href={profile.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+            <li><a href={`mailto:${profile.email}`}>Email</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div className="footer-col-title">Projects</div>
+          <ul className="footer-col-links">
+            <li><a href="https://github.com/Suyash-24/IRIS" target="_blank" rel="noopener noreferrer">IRIS Classifier</a></li>
+            <li><a href="https://github.com/Suyash-24/Cipher-Cli" target="_blank" rel="noopener noreferrer">Cipher CLI</a></li>
+            <li><a href="https://github.com/Suyash-24/student-performance-eda" target="_blank" rel="noopener noreferrer">Student EDA</a></li>
+            <li><a href="https://github.com/Suyash-24/WebCrawler" target="_blank" rel="noopener noreferrer">WebCrawler</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div className="footer-col-title">Location</div>
+          <ul className="footer-col-links">
+            <li><a href="#">Pune, Maharashtra</a></li>
+            <li><a href="#">India · 18°31′N</a></li>
+            <li style={{ marginTop: '1rem' }}>
+              <a href={profile.resume} target="_blank" rel="noopener noreferrer">
+                Download Résumé ↗
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Bottom copyright */}
+      <div className="footer-copy reveal">
+        <span className="footer-copy-text">
+          © {new Date().getFullYear()} Suyash Narawade. All rights reserved.
+        </span>
+        <span className="footer-copy-brand">
+          SUYASH NARAWADE · PORTFOLIO
+        </span>
+      </div>
+
     </section>
   )
 }

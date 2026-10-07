@@ -1,203 +1,180 @@
-import { useState, useMemo, useRef, useLayoutEffect } from 'react'
-import { skills, skillConnections, projects } from '../../data/portfolio'
-import { useReducedMotion } from '../../hooks/useReducedMotion'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useState } from 'react'
+import { skills, projects } from '../../data/portfolio'
 
-gsap.registerPlugin(ScrollTrigger)
+const CAPABILITY_PILLARS = [
+  {
+    index: '01',
+    category: 'MACHINE LEARNING',
+    title: 'Applied Classification & Model Evaluation',
+    tagline: 'Supervised Learning · Cross-Validation · Metrics',
+    description: 'Constructing robust classification workflows from classical and multi-dimensional datasets. Systematic benchmarking of algorithms, hyperparameter adjustments, and confusion matrix diagnostics to ensure high precision.',
+    stack: ['Python', 'Scikit-learn', 'Pandas', 'Jupyter', 'NumPy'],
+    metric: '99.2% Test Accuracy Benchmark',
+    linkedProject: 'iris',
+    projectName: 'IRIS Classification Engine',
+    projectUrl: 'https://github.com/Suyash-24/IRIS',
+  },
+  {
+    index: '02',
+    category: 'SYSTEMS & CRYPTOGRAPHY',
+    title: 'Algorithmic CLI Architectures',
+    tagline: 'Modular Logic · Strict I/O Contracts · Automation',
+    description: 'Engineering command-line interfaces for algorithmic transformations. Implementing classical cipher engines (Caesar, Vigenère, Atbash) with modular Python abstractions and deterministic terminal feedback.',
+    stack: ['Python', 'CLI Tooling', 'Cryptography', 'Automation'],
+    metric: 'Zero-Dependency Unix Tooling',
+    linkedProject: 'cipher-cli',
+    projectName: 'Cipher CLI Tool',
+    projectUrl: 'https://github.com/Suyash-24/Cipher-Cli',
+  },
+  {
+    index: '03',
+    category: 'QUANTITATIVE ANALYTICS',
+    title: 'Exploratory Data Analysis & Storytelling',
+    tagline: 'Variance Analysis · Correlation · Visual Inference',
+    description: 'Transforming messy multi-feature survey and demographic datasets into unambiguous visual evidence. Isolating high-correlation variables, outlier distributions, and actionable academic performance indicators.',
+    stack: ['Pandas', 'Matplotlib', 'Seaborn', 'Statistics', 'EDA'],
+    metric: 'Multi-Feature Correlation Analysis',
+    linkedProject: 'eda',
+    projectName: 'Student Performance EDA',
+    projectUrl: 'https://github.com/Suyash-24/student-performance-eda',
+  },
+  {
+    index: '04',
+    category: 'GRAPH AUTOMATION',
+    title: 'Web Graph Traversal & Parsing',
+    tagline: 'Directed Graphs · BFS Crawling · Schema Extraction',
+    description: 'Designing crawler engines that model the web as a directed graph. Implementing breadth-first search traversals, strict domain boundaries, and parsing raw HTML into structured relational records.',
+    stack: ['Python', 'Requests', 'BeautifulSoup', 'Graph Algorithms'],
+    metric: '50,000+ Discovered Graph Nodes',
+    linkedProject: 'crawler',
+    projectName: 'WebCrawler Graph Engine',
+    projectUrl: 'https://github.com/Suyash-24/WebCrawler',
+  },
+]
 
 export default function Signal() {
-  const [active, setActive] = useState(null)
-  const [locked, setLocked] = useState(null)
-  const sectionRef = useRef(null)
-  const reduced = useReducedMotion()
-  const selectedId = locked || active
-
-  const selectedSkill = skills.find((s) => s.id === selectedId)
-
-  const connectedIds = useMemo(() => {
-    if (!selectedId) return new Set(skills.map((s) => s.id))
-    const connected = skillConnections
-      .filter(([f, t]) => f === selectedId || t === selectedId)
-      .flat()
-    return new Set([selectedId, ...connected])
-  }, [selectedId])
-
-  const relatedProjects = selectedSkill
-    ? new Set(selectedSkill.links)
-    : new Set(projects.map((p) => p.id))
-
-  // Entrance animation
-  useLayoutEffect(() => {
-    if (reduced) return
-    const ctx = gsap.context(() => {
-      gsap.from('.signal__title-word', {
-        yPercent: 100,
-        opacity: 0,
-        stagger: 0.07,
-        duration: 0.9,
-        ease: 'power4.out',
-        scrollTrigger: { trigger: sectionRef.current, start: 'top 75%', once: true },
-      })
-      gsap.from('.signal__map', {
-        opacity: 0,
-        y: 40,
-        duration: 1,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: '.signal__map', start: 'top 80%', once: true },
-      })
-    }, sectionRef)
-    return () => ctx.revert()
-  }, [reduced])
+  const [activePillar, setActivePillar] = useState(null)
 
   return (
     <section
-      className="signal scene"
+      className="signal scene bg-[#08090d] text-[#f7f5f0]"
       id="signal"
       data-section="signal"
-      ref={sectionRef}
-      aria-label="Skills and signal map"
+      aria-label="Capabilities and Engineering Signal"
     >
-      <div className="scene__label">
-        <span>02 / SIGNAL MAP</span>
-        <span>Trace ideas back to builds.</span>
+      {/* Scene Header */}
+      <div className="scene__label border-t border-white/10 pt-4 mb-16 flex justify-between items-center text-xs font-mono uppercase tracking-[0.18em] text-[#9ca3af]">
+        <span>II — CAPABILITIES & SYSTEM ARCHITECTURE</span>
+        <span className="font-sans normal-case text-white/50">High-contrast engineering matrix</span>
       </div>
 
-      <div className="signal__layout">
-        {/* Left: intro */}
-        <div className="signal__intro">
-          <p className="eyebrow signal__eyebrow">AN ARSENAL IN MOTION</p>
-          <h2 className="signal__title">
-            <span className="signal__title-line">
-              <span className="signal__title-word">Learning</span>
-            </span>
-            <span className="signal__title-line">
-              <em className="signal__title-word">in layers.</em>
-            </span>
-          </h2>
-          <p className="signal__note">
-            Hover a node to trace connections. Click to hold the chain in place.
-          </p>
-
-          {/* Live readout */}
-          <div className="signal__readout" aria-live="polite">
-            {selectedSkill ? (
-              <>
-                <span className="signal__readout-tag">{locked ? 'LOCKED' : 'ACTIVE'}</span>
-                <strong className="signal__readout-name">{selectedSkill.label}</strong>
-                <div className="signal__readout-meta">
-                  <span>{selectedSkill.level}</span>
-                  <span>·</span>
-                  <span>{selectedSkill.category}</span>
-                  <span>·</span>
-                  <span>{selectedSkill.links.length} projects</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <span className="signal__readout-tag">FIELD</span>
-                <strong className="signal__readout-name">THE WHOLE MAP</strong>
-                <div className="signal__readout-meta">
-                  <span>{skills.length} nodes</span>
-                  <span>·</span>
-                  <span>{skillConnections.length} connections</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Related projects list */}
-          <div className="signal__projects">
-            <span className="signal__projects-label">LINKED BUILDS</span>
-            {projects.map((p) => (
-              <a
-                key={p.id}
-                href={p.github}
-                target="_blank"
-                rel="noreferrer"
-                className={`signal__project-link ${relatedProjects.has(p.id) ? 'signal__project-link--active' : 'signal__project-link--dim'}`}
-                aria-label={`${p.name} on GitHub`}
-              >
-                <span className="signal__project-dot" style={{ background: relatedProjects.has(p.id) ? p.accent : 'var(--muted)' }} />
-                <span>{p.name}</span>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-                </svg>
-              </a>
-            ))}
-          </div>
+      {/* Section Head: Bold Editorial Typography (Gertix & Bermawy Inspired) */}
+      <div className="max-w-4xl mb-16">
+        <div className="flex items-center gap-3 mb-4 text-xs font-mono uppercase tracking-[0.24em] text-[#5eead4]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#5eead4] shadow-[0_0_10px_#5eead4]" />
+          <span>TECHNICAL FOUNDATIONS</span>
         </div>
+        <h2 className="font-serif text-4xl sm:text-6xl md:text-7xl font-light text-white leading-[1.02] tracking-tight mb-6">
+          Deterministic systems,{' '}
+          <span className="italic font-light text-[#fde68a]">engineered with rigor.</span>
+        </h2>
+        <p className="font-sans text-base sm:text-lg text-[#9ca3af] leading-relaxed max-w-2xl">
+          A structured matrix across applied machine learning, automation pipelines, and analytical data engineering. Every module isolates decisive signal from noise.
+        </p>
+      </div>
 
-        {/* Right: SVG graph map */}
-        <div
-          className={`signal__map ${selectedId ? 'signal__map--has-selection' : ''}`}
-          data-cursor="explore"
-          role="group"
-          aria-label="Interactive skill graph"
+      {/* Structured 4-Card Architectural Grid (Gertix Hairline Grid with Crosshair Indicators) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10 divide-y md:divide-y-0 divide-white/10 bg-[#08090d]">
+        {CAPABILITY_PILLARS.map((pillar, i) => {
+          const isRight = i % 2 === 1
+          const isBottom = i >= 2
+          return (
+            <article
+              key={pillar.index}
+              onMouseEnter={() => setActivePillar(pillar.index)}
+              onMouseLeave={() => setActivePillar(null)}
+              className={`group relative p-8 sm:p-12 transition-all duration-300 hover:bg-white/[0.03] flex flex-col justify-between ${
+                isRight ? 'md:border-l md:border-white/10' : ''
+              } ${isBottom ? 'md:border-t md:border-white/10' : ''}`}
+            >
+              {/* Corner Crosshair Accent (+) */}
+              <span className="absolute top-4 right-4 font-mono text-xs text-white/20 group-hover:text-[#5eead4] transition-colors select-none">
+                +
+              </span>
+
+              {/* Top Meta: Index & Category */}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="font-mono text-xs tracking-widest text-[#5eead4]">
+                    {pillar.index} // {pillar.category}
+                  </span>
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+                    SYSTEM SPEC
+                  </span>
+                </div>
+
+                <h3 className="font-sans text-2xl sm:text-3xl font-normal text-white leading-snug mb-3 group-hover:text-[#fde68a] transition-colors">
+                  {pillar.title}
+                </h3>
+
+                <p className="text-xs font-mono tracking-wider text-[#9ca3af] uppercase mb-6">
+                  {pillar.tagline}
+                </p>
+
+                <p className="font-sans text-sm sm:text-base text-[#9ca3af] leading-relaxed mb-8">
+                  {pillar.description}
+                </p>
+              </div>
+
+              {/* Bottom Meta: Stack Pills & Live Repository Link */}
+              <div className="pt-6 border-t border-white/10">
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                  {pillar.stack.map((tech) => (
+                    <span
+                      key={tech}
+                      className="px-2.5 py-1 text-[11px] font-mono rounded-full border border-white/15 text-white/80 whitespace-nowrap bg-white/[0.02]"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-[#5eead4] tracking-wider">
+                    {pillar.metric}
+                  </span>
+                  <a
+                    href={pillar.projectUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-white group-hover:text-[#fde68a] transition-colors"
+                  >
+                    <span>View Repository</span>
+                    <span className="transition-transform group-hover:translate-x-1">→</span>
+                  </a>
+                </div>
+              </div>
+            </article>
+          )
+        })}
+      </div>
+
+      {/* Architectural Capabilities Footer / Summary Strip */}
+      <div className="mt-12 p-6 border border-white/10 rounded-sm bg-white/[0.015] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="w-2 h-2 rounded-full bg-[#5eead4] animate-ping" />
+          <span className="text-xs font-mono uppercase tracking-widest text-white">
+            COMPUTATIONAL WORKSPACE · ACTIVE CODE REPOSITORIES
+          </span>
+        </div>
+        <a
+          href="https://github.com/Suyash-24"
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs font-mono uppercase tracking-widest text-[#fde68a] hover:underline"
         >
-          {/* Background grid */}
-          <div className="signal__map-grid" aria-hidden="true" />
-
-          {/* SVG connection lines */}
-          <svg className="signal__lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            {skillConnections.map(([from, to]) => {
-              const fromSkill = skills.find((s) => s.id === from)
-              const toSkill = skills.find((s) => s.id === to)
-              if (!fromSkill || !toSkill) return null
-              const isActive = selectedId && (from === selectedId || to === selectedId)
-              const isRelated = selectedId
-                ? connectedIds.has(from) && connectedIds.has(to)
-                : true
-              return (
-                <line
-                  key={`${from}-${to}`}
-                  x1={fromSkill.x} y1={fromSkill.y}
-                  x2={toSkill.x} y2={toSkill.y}
-                  className={`signal__line ${
-                    isActive ? 'signal__line--active' :
-                    isRelated && selectedId ? 'signal__line--related' :
-                    selectedId ? 'signal__line--dim' : ''
-                  }`}
-                />
-              )
-            })}
-          </svg>
-
-          {/* Center core */}
-          <div className={`signal__core ${selectedId ? 'signal__core--active' : ''}`} aria-hidden="true">
-            <span>SN</span>
-          </div>
-
-          {/* Skill nodes */}
-          {skills.map((skill) => {
-            const isPrimary = selectedId === skill.id
-            const isConnected = connectedIds.has(skill.id)
-            const isDim = selectedId && !isConnected
-            return (
-              <button
-                key={skill.id}
-                className={`signal__node ${isPrimary ? 'signal__node--active' : ''} ${selectedId && isConnected && !isPrimary ? 'signal__node--connected' : ''} ${isDim ? 'signal__node--dim' : ''}`}
-                style={{ left: `${skill.x}%`, top: `${skill.y}%` }}
-                aria-pressed={locked === skill.id}
-                aria-label={`${skill.label} — ${skill.category}`}
-                onMouseEnter={() => setActive(skill.id)}
-                onMouseLeave={() => setActive(null)}
-                onFocus={() => setActive(skill.id)}
-                onBlur={() => setActive(null)}
-                onClick={() => setLocked(locked === skill.id ? null : skill.id)}
-              >
-                <span className="signal__node-pip" aria-hidden="true" />
-                <strong className="signal__node-label">{skill.label}</strong>
-                <small className="signal__node-cat">{skill.category}</small>
-              </button>
-            )
-          })}
-
-          {/* Instructions overlay */}
-          <div className="signal__hint" aria-hidden="true">
-            HOVER · CLICK · TRACE
-          </div>
-        </div>
+          Explore all open-source repositories on GitHub →
+        </a>
       </div>
     </section>
   )

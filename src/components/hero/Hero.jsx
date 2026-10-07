@@ -1,405 +1,233 @@
-import { useEffect, useRef, useState } from 'react'
-import gsap from 'gsap'
-import { profile } from '../../data/portfolio'
-import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { useEffect, useRef } from 'react'
+import { profile, marqueeItems } from '../../data/portfolio'
+import IceCubeCanvas from './IceCube'
+import anime from 'animejs'
 
+// ──────────────────────────────────────────────────────────────────────────────
+// HERO — Oneshot Hero Landing Page (SKILL.md compliant)
+// Dark video scrub: 380vh sticky container, RAF scrub engine
+// ──────────────────────────────────────────────────────────────────────────────
 export default function Hero() {
-  const heroRef = useRef(null)
-  const glyphRef = useRef(null)
-  const copyRef = useRef(null)
-  const reduced = useReducedMotion()
+  const heroSectionRef = useRef(null)
+  const cubeRef        = useRef(null)
+  const phase0Ref      = useRef(null)
+  const phase1Ref      = useRef(null)
+  const phase2Ref      = useRef(null)
+  const progressRef    = useRef(null)
 
-  const [mouseNorm, setMouseNorm] = useState({ x: 0.5, y: 0.5 })
-  const [loaded, setLoaded] = useState(false)
-
-  // Initial reveal animation
   useEffect(() => {
-    if (reduced) { setLoaded(true); return }
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ onComplete: () => setLoaded(true) })
-      // Horizontal lines appear
-      tl.from('.hero__grid-line--h', {
-        scaleX: 0,
-        transformOrigin: 'left center',
-        stagger: { amount: 0.5, from: 'random' },
-        duration: 0.7,
-        ease: 'power3.inOut',
-      }, 0)
-      // Vertical lines appear
-      tl.from('.hero__grid-line--v', {
-        scaleY: 0,
-        transformOrigin: 'center top',
-        stagger: { amount: 0.5, from: 'random' },
-        duration: 0.7,
-        ease: 'power3.inOut',
-      }, 0.1)
-      // Title words reveal
-      tl.from('.hero__title-word', {
-        yPercent: 105,
-        opacity: 0,
-        stagger: 0.09,
-        duration: 1.0,
-        ease: 'power4.out',
-      }, 0.45)
-      // Sub-copy
-      tl.from('.hero__blurb', { y: 24, opacity: 0, duration: 0.9, ease: 'power3.out' }, 0.85)
-      // Scroll cue
-      tl.from('.hero__scroll', { opacity: 0, y: 10, duration: 0.7 }, 1.4)
-      
-      // Parallax scroll transition: visual gets absorbed into the background
-      if (glyphRef.current) {
-        gsap.to(glyphRef.current, {
-          scrollTrigger: {
-            trigger: heroRef.current,
-            start: 'top top',
-            end: 'bottom top',
-            scrub: true,
-          },
-          scale: 1.05,
-          y: 40,
-          opacity: 0,
-        })
+    // ── 1. Anime.js Initial Load Animation (Premium & Subtle) ─────────────────
+    anime({
+      targets: '.ml-anim',
+      translateY: [40, 0],
+      opacity: [0, 1],
+      duration: 1600,
+      easing: 'easeOutCubic',
+      delay: anime.stagger(150, { start: 100 })
+    });
+
+    const heroSection = heroSectionRef.current
+    const phase0      = phase0Ref.current
+    const phase1      = phase1Ref.current
+    const phase2      = phase2Ref.current
+    const progressBar = progressRef.current
+
+    if (!heroSection) return
+
+    // ── 2. Scroll progress ────────────────────────────────────────────────────
+    let targetProgress  = 0
+    let currentProgress = 0
+    let isRunning       = true
+
+    function updateScroll() {
+      const rect = heroSection.getBoundingClientRect()
+      const max  = rect.height - window.innerHeight
+      if (max > 0) targetProgress = Math.max(0, Math.min(1, -rect.top / max))
+    }
+    window.addEventListener('scroll', updateScroll, { passive: true })
+    window.addEventListener('resize', updateScroll)
+    updateScroll()
+
+    // ── 3. Progress-Locked Opacity (SKILL.md §Progress-Locked Hero Text) ──────
+    function calcPhase0Opacity(p) {
+      if (p <= 0.20) return 1.0
+      if (p >  0.30) return 0
+      return Math.max(0, 1 - (p - 0.20) / 0.10)
+    }
+    function calcPhaseOpacity(p, enterStart, enterEnd, exitStart, exitEnd) {
+      if (p < enterStart || p > exitEnd) return 0
+      if (p < enterEnd)  return (p - enterStart) / (enterEnd - enterStart)
+      if (p > exitStart) return Math.max(0, 1 - (p - exitStart) / (exitEnd - exitStart))
+      return 1.0
+    }
+
+    // ── 4. Animation Loop ─────────────────────────────────────────────────────
+    let animId
+    function scrubLoop() {
+      if (!isRunning) return
+
+      currentProgress += (targetProgress - currentProgress) * 0.15
+
+      const op0 = calcPhase0Opacity(targetProgress)
+      const op1 = calcPhaseOpacity(targetProgress, 0.28, 0.38, 0.58, 0.66)
+      const op2 = calcPhaseOpacity(targetProgress, 0.66, 0.76, 0.92, 0.99)
+
+      if (phase0) {
+        phase0.style.opacity   = op0.toFixed(3)
+        phase0.style.transform = `translateY(calc(-50% + ${-targetProgress * 55}px))`
       }
-    }, heroRef)
-    return () => ctx.revert()
-  }, [reduced])
+      if (phase1) {
+        phase1.style.opacity   = op1.toFixed(3)
+        phase1.style.transform = `translateY(calc(-50% + ${(0.48 - targetProgress) * 45}px))`
+        
+        const title1 = phase1.querySelector('h2')
+        if (title1) {
+          const text = "I BUILD WITH DATA.\nAND TURN IDEAS INTO\nWORKING SYSTEMS."
+          let p = (targetProgress - 0.28) / (0.42 - 0.28)
+          p = Math.max(0, Math.min(1, p))
+          const chars = Math.floor(p * text.length)
+          title1.innerHTML = text.slice(0, chars).replace(/\n/g, '<br />') + (p < 1 ? '<span style="opacity:0.5">_</span>' : '')
+        }
+      }
+      if (phase2) {
+        phase2.style.opacity   = op2.toFixed(3)
+        phase2.style.transform = `translateY(calc(-50% + ${(0.82 - targetProgress) * 45}px))`
 
-  // Mouse parallax
-  useEffect(() => {
-    if (reduced || window.matchMedia('(pointer: coarse)').matches) return
-    const hero = heroRef.current
-    const onMove = (e) => {
-      const rect = hero.getBoundingClientRect()
-      setMouseNorm({
-        x: (e.clientX - rect.left) / rect.width,
-        y: (e.clientY - rect.top) / rect.height,
-      })
+        const title2 = phase2.querySelector('h2')
+        if (title2) {
+          const text = "ENGINEERED TO REPRODUCE.\nBUILT TO LAST."
+          let p = (targetProgress - 0.66) / (0.78 - 0.66)
+          p = Math.max(0, Math.min(1, p))
+          const chars = Math.floor(p * text.length)
+          title2.innerHTML = text.slice(0, chars).replace(/\n/g, '<br />') + (p < 1 ? '<span style="opacity:0.5">_</span>' : '')
+        }
+      }
+      if (progressBar) {
+        progressBar.style.width = `${targetProgress * 100}%`
+      }
+
+      animId = requestAnimationFrame(scrubLoop)
     }
-    const onLeave = () => setMouseNorm({ x: 0.5, y: 0.5 })
-    hero.addEventListener('mousemove', onMove)
-    hero.addEventListener('mouseleave', onLeave)
+    animId = requestAnimationFrame(scrubLoop)
+
     return () => {
-      hero.removeEventListener('mousemove', onMove)
-      hero.removeEventListener('mouseleave', onLeave)
+      isRunning = false
+      cancelAnimationFrame(animId)
+      window.removeEventListener('scroll', updateScroll)
+      window.removeEventListener('resize', updateScroll)
     }
-  }, [reduced])
+  }, [])
 
-  const dx = (mouseNorm.x - 0.5) * 2
-  const dy = (mouseNorm.y - 0.5) * 2
+  const scrollTo = (id) => {
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const base      = import.meta.env.BASE_URL || '/'
+  const posterUrl = `${base.replace(/\/$/, '')}/assets/hero_poster.jpg`
+
+  // Ticker items × 2 for seamless loop
+  const tickers = [...marqueeItems, ...marqueeItems]
 
   return (
-    <section 
-      className="hero" 
-      id="top" 
-      data-section="top" 
-      ref={heroRef} 
-      aria-label="Introduction"
-      style={{
-        '--mouse-x': mouseNorm.x,
-        '--mouse-y': mouseNorm.y
-      }}
-    >
-      {/* Background grid */}
-      <HeroGrid />
+    /* 380vh sticky scroll container — SKILL.md §4 */
+    <div id="hero" ref={heroSectionRef} className="hero-track" data-section="hero">
+      <div className="hero-sticky">
 
-      {/* Metadata line */}
-      <div className="hero__meta" aria-hidden="true">
-        <span>B.E. COMPUTER ENGINEERING</span>
-        <span className="hero__meta-sep">◆</span>
-        <span>{profile.coords}</span>
-        <span className="hero__meta-sep">◆</span>
-        <span>CLASS OF 2026</span>
-      </div>
+        {/* ── True Interactive WebGL Ice Cube ── */}
+        <IceCubeCanvas />
 
-      {/* Main layout: title + identity */}
-      <div className="hero__body">
-        {/* Left: Title */}
-        <div className="hero__copy" ref={copyRef} style={{
-          transform: `translate(${dx * -8}px, ${dy * -6}px)`,
-          transition: reduced ? 'none' : 'transform 0.8s cubic-bezier(0.2,0.8,0.2,1)',
-        }}>
-          <p className="hero__eyebrow">
-            <span className="hero__status-dot" aria-hidden="true" />
-            DATA SCIENCE · MACHINE LEARNING
-          </p>
-          <h1 className="hero__title" aria-label="Suyash Narawade">
-            <span className="hero__title-line">
-              <span className="hero__title-word hero__title-word--outline">Suyash</span>
-            </span>
-            <span className="hero__title-line">
-              <span className="hero__title-word">Narawade</span>
-              <span className="hero__title-word hero__title-word--period" aria-hidden="true">.</span>
-            </span>
+        {/* ── Phase 0: Name + intro (visible on load, fades by 30%) ─────────── */}
+        <div ref={phase0Ref} className="hero-phase active" id="phase-0" style={{ transformOrigin: 'left center' }}>
+          <div className="hero-eyebrow ml-anim" style={{ marginBottom: '1.5rem', color: '#1a1c23', fontWeight: 600 }}>
+            PORTFOLIO // 2026
+          </div>
+          
+          <h1 className="hero-glowing-title ml-anim" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+            <div>SUYASH</div>
+            <div>NARAWADE</div>
           </h1>
-          <p className="hero__blurb">
-            Computer Engineering student exploring Data Science, Machine Learning,
-            Python, and Analytics — turning curiosity into tools, clear analysis,
-            and systems that work.
-          </p>
 
-          <div className="hero__cta-row">
-            <button
-              className="hero__cta hero__cta--primary"
-              onClick={() => document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' })}
-              data-cursor="link"
-            >
-              View work
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
-              </svg>
+          <div className="ml-anim" style={{ borderLeft: '2px solid rgba(0,0,0,0.1)', paddingLeft: '1.25rem', marginBottom: '3rem' }}>
+            <p className="hero-bio" style={{ marginBottom: '0.25rem', color: '#1a1c23', fontWeight: 600 }}>
+              {profile.focus}
+            </p>
+            <p className="hero-bio" style={{ marginBottom: 0, fontSize: '0.75rem', maxWidth: '50ch' }}>
+              Building reproducible systems that transform raw data into verifiable decisions.
+            </p>
+          </div>
+
+          {/* Split CTA — Gertix exact pattern */}
+          <div className="hero-cta-group ml-anim" style={{ pointerEvents: 'auto' }}>
+            <button className="btn-label" onClick={() => scrollTo('work')}>
+              SELECTED WORK
             </button>
-            <a
-              className="hero__cta hero__cta--ghost"
-              href={`mailto:${profile.email}`}
-              data-cursor="email"
-            >
-              Get in touch
-            </a>
+            <button className="btn-arrow" onClick={() => scrollTo('work')} aria-label="Go to work">
+              →
+            </button>
           </div>
         </div>
 
-        {/* Right: interactive shader artwork */}
-        <div
-          className="hero__instrument"
-          ref={glyphRef}
-          style={{
-            transform: `translate(${dx * 6}px, ${dy * 4}px)`,
-            transition: reduced ? 'none' : 'transform 0.95s cubic-bezier(0.2,0.8,0.2,1)',
-          }}
-          data-cursor="explore"
-        >
-          <SignalParallax reduced={reduced} />
+        {/* ── Phase 1: Manifesto (30%–66% scroll) ──────────────────────────── */}
+        <div ref={phase1Ref} className="hero-phase" id="phase-1" style={{ transformOrigin: 'left center' }}>
+          <div className="hero-eyebrow" style={{ marginBottom: '1.5rem', color: '#1a1c23', fontWeight: 600 }}>
+            // THESIS
+          </div>
+          <h2 className="hero-glowing-title" style={{ minHeight: '3.3em' }}>
+            I BUILD WITH DATA.<br />
+            AND TURN IDEAS INTO<br />
+            WORKING SYSTEMS.
+          </h2>
+          <div style={{ borderLeft: '2px solid rgba(0,0,0,0.1)', paddingLeft: '1.25rem', marginTop: '2rem' }}>
+            <p className="hero-bio" style={{ marginBottom: 0, fontSize: '0.8rem', maxWidth: '45ch' }}>
+              Multi-model ML benchmarks, graph traversal crawlers,
+              and cryptographic tooling — built with strict contracts
+              and reproducible pipelines.
+            </p>
+          </div>
         </div>
+
+        {/* ── Phase 2: Final statement (66%–99% scroll) ────────────────────── */}
+        <div ref={phase2Ref} className="hero-phase" id="phase-2" style={{ transformOrigin: 'left center' }}>
+          <div className="hero-eyebrow" style={{ marginBottom: '1.5rem', color: '#1a1c23', fontWeight: 600 }}>
+            // CODEBASES
+          </div>
+          <h2 className="hero-glowing-title" style={{ minHeight: '2.2em' }}>
+            ENGINEERED TO REPRODUCE.<br />
+            BUILT TO LAST.
+          </h2>
+          <div style={{ borderLeft: '2px solid rgba(0,0,0,0.1)', paddingLeft: '1.25rem', marginTop: '2rem', marginBottom: '2.5rem' }}>
+            <p className="hero-bio" style={{ marginBottom: 0, fontSize: '0.8rem', maxWidth: '45ch' }}>
+              Every repository is open, documented, and designed to
+              transform complex questions into verifiable, readable systems.
+            </p>
+          </div>
+          <div className="hero-cta-group" style={{ pointerEvents: 'auto' }}>
+            <button className="btn-label" onClick={() => scrollTo('about')}>
+              ABOUT ME
+            </button>
+            <button className="btn-arrow" onClick={() => scrollTo('about')} aria-label="About">
+              →
+            </button>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div ref={progressRef} className="hero-progress" aria-hidden="true" />
+
+        {/* Bottom ticker — Gertix marquee with dashed top border */}
+        <div className="hero-ticker" aria-hidden="true">
+          <div className="hero-ticker-track">
+            {tickers.map((item, i) => (
+              <span key={i} className="hero-ticker-item">
+                {item}
+                <span className="hero-ticker-sep"> → </span>
+              </span>
+            ))}
+          </div>
+        </div>
+
       </div>
-
-      {/* Scroll indicator */}
-      <a className="hero__scroll" href="#about" aria-label="Scroll to next section">
-        <span>SCROLL</span>
-        <span className="hero__scroll-line" aria-hidden="true" />
-      </a>
-
-      {/* Bottom index */}
-      <div className="hero__index" aria-hidden="true">[ 001 ] IDENTITY</div>
-    </section>
-  )
-}
-
-function HeroGrid() {
-  const lines = Array.from({ length: 8 })
-  const cols = Array.from({ length: 6 })
-  return (
-    <div className="hero__grid" aria-hidden="true">
-      {lines.map((_, i) => (
-        <div key={i} className="hero__grid-line hero__grid-line--h" style={{ top: `${(i + 1) * 11.5}%` }} />
-      ))}
-      {cols.map((_, i) => (
-        <div key={i} className="hero__grid-line hero__grid-line--v" style={{ left: `${(i + 1) * 14.5}%` }} />
-      ))}
     </div>
   )
-}
-
-function SignalParallax({ reduced }) {
-  const shellRef = useRef(null)
-
-  useEffect(() => {
-    const shell = shellRef.current
-    if (!shell) return undefined
-
-    let cancelled = false
-    let dispose = () => {}
-
-    import('three').then((THREE) => {
-      if (cancelled) return
-
-      const canvas = document.createElement('canvas')
-      canvas.className = 'hero__shader-canvas'
-      canvas.setAttribute('aria-hidden', 'true')
-      shell.appendChild(canvas)
-
-      let renderer
-      try {
-        renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' })
-      } catch {
-        canvas.remove()
-        return
-      }
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
-
-      const scene = new THREE.Scene()
-      const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 20000)
-      camera.position.z = 260
-      const pointer = { x: 0, y: 0 }
-      const target = { x: 0, y: 0 }
-      let frame = 0
-      let mesh
-      let material
-      let textures = []
-
-      const fragmentShader = `
-        precision highp float;
-        varying vec2 vUv;
-        uniform sampler2D textureImage;
-        uniform sampler2D textureDepth;
-        uniform vec2 mousePosition;
-        uniform float hoverState;
-        
-        // Very subtle parallax matching user request for realism
-        const float BASE_PARALLAX = 0.015;
-        const float HOVER_PARALLAX_BOOST = 0.01;
-        
-        void main () {
-          vec4 texDepth = texture2D(textureDepth, vUv);
-          
-          // Normalized depth [-0.5, 0.5]
-          float depthVal = texDepth.r - 0.5;
-          
-          // Displacement based on mouse, depth
-          float parallax = BASE_PARALLAX + (HOVER_PARALLAX_BOOST * hoverState);
-          vec2 displacedUv = vUv + (mousePosition * depthVal * parallax);
-          
-          vec4 texImage = texture2D(textureImage, displacedUv);
-          
-          // Distance from center [0.5, 0.5]
-          float dist = distance(vUv, vec2(0.5));
-          
-          // 1. Fade heavily on the left to avoid overlapping typography
-          float leftFade = smoothstep(0.05, 0.35, vUv.x);
-          
-          // 2. Radial vignette: must reach 0.0 alpha BEFORE dist=0.5 (the physical edge of the plane geometry)
-          // This completely eliminates the "inner rectangle" edge artifact.
-          float vignette = smoothstep(0.48, 0.20, dist);
-          
-          // 3. Extra top/bottom soft feathering to guarantee no straight lines
-          float topBottomFade = smoothstep(0.02, 0.15, vUv.y) * smoothstep(0.98, 0.85, vUv.y);
-          
-          float combinedMask = leftFade * vignette * topBottomFade;
-          
-          gl_FragColor = vec4(texImage.rgb, combinedMask);
-        }
-      `
-
-      const vertexShader = `
-        attribute vec3 position;
-        attribute vec2 uv;
-        uniform mat4 projectionMatrix;
-        uniform mat4 modelViewMatrix;
-        varying vec2 vUv;
-
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `
-
-      const loader = new THREE.TextureLoader()
-      const basePath = import.meta.env.BASE_URL || '/'
-      const urls = [
-        basePath + 'hero-shader/anime-workspace.jpg',
-        basePath + 'hero-shader/anime-depth.jpg'
-      ]
-      let loaded = 0
-      const loadedTextures = []
-      
-      const start = () => {
-        if (cancelled || loaded < urls.length) return
-        textures = loadedTextures
-        textures[0].minFilter = THREE.LinearFilter
-        textures[1].magFilter = textures[1].minFilter = THREE.LinearFilter
-
-        material = new THREE.RawShaderMaterial({
-          transparent: true,
-          vertexShader,
-          fragmentShader,
-          uniforms: {
-            textureImage: { value: textures[0] },
-            textureDepth: { value: textures[1] },
-            mousePosition: { value: new THREE.Vector2(0.0, 0.0) },
-            hoverState: { value: 0.0 }
-          },
-        })
-        
-        // Use a 1:1 plane geometry since the generated anime images are square
-        mesh = new THREE.Mesh(new THREE.PlaneGeometry(1024, 1024, 64, 64), material)
-        scene.add(mesh)
-        resize()
-        render()
-      }
-
-      urls.forEach((url, index) => loader.load(url, (texture) => {
-        loadedTextures[index] = texture
-        loaded += 1
-        start()
-      }))
-
-      const resize = () => {
-        const rect = shell.getBoundingClientRect()
-        renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false)
-        camera.aspect = rect.width / Math.max(rect.height, 1)
-        camera.updateProjectionMatrix()
-        
-        if (mesh) {
-          const dist = camera.position.z
-          const vFov = (camera.fov * Math.PI) / 180
-          const planeHeightAtDistance = 2 * Math.tan(vFov / 2) * dist
-          const planeWidthAtDistance = planeHeightAtDistance * camera.aspect
-          // Scale based on a 1:1 image
-          const scale = Math.max(planeWidthAtDistance / 1024, planeHeightAtDistance / 1024)
-          mesh.scale.set(scale, scale, 1)
-        }
-      }
-
-      // Current logical pointer position for smooth lerp
-      const currentPointer = { x: 0, y: 0 }
-      let targetHover = 0.0
-      let currentHover = 0.0
-
-      const move = (event) => {
-        const rect = shell.getBoundingClientRect()
-        // Map mouse coordinates to [-1, 1] relative to the shell center
-        target.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-        target.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1)
-        targetHover = 1.0
-      }
-      const leave = () => { 
-        target.x = 0
-        target.y = 0 
-        targetHover = 0.0
-      }
-      const render = (time = 0) => {
-        if (!mesh || !material) return
-        pointer.x += (target.x - pointer.x) * 0.05
-        pointer.y += (target.y - pointer.y) * 0.05
-        currentHover += (targetHover - currentHover) * 0.05
-        
-        material.uniforms.mousePosition.value.set(pointer.x, pointer.y)
-        material.uniforms.hoverState.value = currentHover
-        
-        renderer.render(scene, camera)
-        if (!reduced) frame = requestAnimationFrame(render)
-      }
-
-      window.addEventListener('resize', resize)
-      window.addEventListener('pointermove', move)
-      window.addEventListener('pointerleave', leave)
-      dispose = () => {
-        cancelAnimationFrame(frame)
-        window.removeEventListener('resize', resize)
-        window.removeEventListener('pointermove', move)
-        window.removeEventListener('pointerleave', leave)
-        mesh?.geometry.dispose()
-        material?.dispose()
-        textures.forEach((texture) => texture.dispose())
-        renderer.dispose()
-        canvas.remove()
-      }
-    }).catch(() => {})
-
-    return () => {
-      cancelled = true
-      dispose()
-    }
-  }, [reduced])
-
-  return <div className="hero__shader-shell" ref={shellRef} aria-label="Interactive 2.5D Technical Portrait Shader" />
 }

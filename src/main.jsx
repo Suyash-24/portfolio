@@ -1,64 +1,60 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import Lenis from 'lenis'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import Cursor from './components/ui/Cursor'
 import CommandPalette from './components/ui/CommandPalette'
 import Navigation from './components/navigation/Navigation'
 import Hero from './components/hero/Hero'
 import About from './components/about/About'
-import Signal from './components/signal/Signal'
 import Projects from './components/projects/Projects'
+import Skills from './components/skills/Skills'
 import Journey from './components/journey/Journey'
 import Contact from './components/contact/Contact'
-import { marqueeItems } from './data/portfolio'
 
+import './tailwind.css'
 import './styles.css'
 
-gsap.registerPlugin(ScrollTrigger)
-
-// ── Marquee ──────────────────────────────────────────────────────────────────
-function Marquee() {
-  const content = [...marqueeItems, ...marqueeItems]
-  return (
-    <div className="marquee" aria-label="Areas of interest" aria-hidden="true">
-      <div className="marquee__track">
-        {content.map((item, i) => (
-          <span key={`${item}-${i}`}>
-            {item}
-            <i aria-hidden="true">✦</i>
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── App ───────────────────────────────────────────────────────────────────────
+// ── App Shell ─────────────────────────────────────────────────────────────────
 function App() {
   const [commandOpen, setCommandOpen] = useState(false)
-  const rootRef = useRef(null)
 
-  // Smooth scroll with Lenis
+  // Smooth scroll with Lenis + global reveal animations
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    
+    // 1. Reveal Animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view')
+        } else {
+          entry.target.classList.remove('in-view')
+        }
+      })
+    }, { threshold: 0.15 })
+
+    const observeElements = () => {
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+    }
+    // Need a tiny delay for React to mount the DOM
+    setTimeout(observeElements, 100)
+
+    // 2. Lenis smooth scroll
     if (reduced) return
 
     const lenis = new Lenis({
-      duration: 1.15,
+      duration: 1.1,
       smoothWheel: true,
       syncTouch: false,
     })
 
     let raf
     const tick = (time) => {
-      lenis.raf(time * 1000)
+      lenis.raf(time)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
-    lenis.on('scroll', ScrollTrigger.update)
 
     return () => {
       cancelAnimationFrame(raf)
@@ -66,66 +62,58 @@ function App() {
     }
   }, [])
 
-  // Page-level scroll choreography
-  useLayoutEffect(() => {
+  // Reveal observer — adds .is-visible on section entry
+  useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduced) return
+    if (reduced) {
+      document.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'))
+      return
+    }
 
-    const ctx = gsap.context(() => {
-      // Hero scroll-out
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 1.2,
-        },
-      })
-        .to('.hero__copy', { y: 80, opacity: 0.1, ease: 'none' }, 0)
-        .to('.hero__instrument', { y: -120, scale: 0.5, opacity: 0.15, rotate: -12, ease: 'none' }, 0)
-        .to('.hero__grid', { opacity: 0.05, ease: 'none' }, 0)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.08 }
+    )
 
-      // Marquee parallax
-      gsap.to('.marquee__track', {
-        xPercent: -25,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.marquee',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1,
-        },
-      })
+    const observe = () => {
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+    }
+    const timer = setTimeout(observe, 100)
 
-      // About reveals
-      gsap.from('.about__heading', {
-        x: -60,
-        opacity: 0,
-        duration: 1,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: '.about__layout', start: 'top 80%', once: true },
-      })
-      gsap.from('.about__copy', {
-        x: 60,
-        opacity: 0,
-        duration: 1,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: '.about__layout', start: 'top 75%', once: true },
-      })
-    }, rootRef)
-    return () => ctx.revert()
+    return () => {
+      clearTimeout(timer)
+      observer.disconnect()
+    }
+  }, [])
+
+  // Cmd+K / Ctrl+K listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setCommandOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   return (
-    <div className="app" ref={rootRef}>
+    <div className="app">
       <Cursor />
-      <Navigation onCommandOpen={() => setCommandOpen(true)} />
       <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
+      <Navigation onCommandOpen={() => setCommandOpen(true)} />
       <main>
         <Hero />
-        <Marquee />
         <About />
-        <Signal />
+        <Skills />
         <Projects />
         <Journey />
         <Contact />
@@ -139,7 +127,5 @@ const root =
   globalThis.__suyashRoot ??
   (globalThis.__suyashRoot = createRoot(document.getElementById('root')))
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 )
