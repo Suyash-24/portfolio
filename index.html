@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Suyash Narawade — Computer Engineering student specialising in Data Science, Machine Learning, Python, and Analytics. Building practical systems from curiosity." />
-    <meta name="theme-color" content="#0e1210" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#EBEBEB" />
+    <meta name="color-scheme" content="light dark" />
 
     <!-- Open Graph -->
     <meta property="og:title" content="Suyash Narawade — Data / ML / Systems" />
@@ -14,13 +14,26 @@
 
     <title>Suyash Narawade — Data / ML / Systems</title>
 
-    <!-- Font preconnect -->
+    <!-- Google Fonts: Space Mono + Space Grotesk -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <script type="module" crossorigin src="/portfolio/assets/index-DZbwj66P.js"></script>
-    <link rel="stylesheet" crossorigin href="/portfolio/assets/index-lS0cjxKR.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/portfolio/assets/index-7v-yx9Rh.js"></script>
+    <link rel="stylesheet" crossorigin href="/portfolio/assets/index-iTBMub1d.css">
   </head>
-  <body>
+  <body class="antialiased">
     <div id="root"></div>
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        document.body.innerHTML = '<div style="color:red;padding:20px;background:black;z-index:9999;position:fixed;top:0;left:0;width:100vw;height:100vh;">' + 
+          '<h1>Runtime Error</h1>' +
+          '<pre>' + message + '\n' + (error && error.stack ? error.stack : '') + '</pre></div>';
+      };
+      window.onunhandledrejection = function(event) {
+        document.body.innerHTML = '<div style="color:red;padding:20px;background:black;z-index:9999;position:fixed;top:0;left:0;width:100vw;height:100vh;">' + 
+          '<h1>Unhandled Rejection</h1>' +
+          '<pre>' + event.reason + '</pre></div>';
+      };
+    </script>
   </body>
 </html>
