@@ -10,7 +10,7 @@ export const profile = {
   email: 'iamnarawadesuyash@gmail.com',
   github: 'https://github.com/Suyash-24',
   linkedin: 'https://www.linkedin.com/in/suyashnarawade/',
-  resume: '/portfolio/Suyash_resumee.pdf',
+  resume: '/Suyash_resumee.pdf',
   status: 'Open to opportunities',
 }
 
