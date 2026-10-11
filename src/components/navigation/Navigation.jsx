@@ -13,7 +13,7 @@ export default function Navigation() {
   const [active, setActive] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [navVisible, setNavVisible] = useState(true)
-  const lastScrollY = useRef(0)
+  const lastScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0)
 
   // 1. Observe active section
   useEffect(() => {
@@ -44,8 +44,8 @@ export default function Navigation() {
       } else if (currentScrollY > lastScrollY.current + 8 && !menuOpen) {
         // Scrolling down -> hide
         setNavVisible(false)
-      } else if (currentScrollY < lastScrollY.current - 8) {
-        // Scrolling up -> show
+      } else if (currentScrollY < lastScrollY.current - 20) {
+        // Scrolling up -> show (higher threshold avoids jitter re-appearing)
         setNavVisible(true)
       }
 
