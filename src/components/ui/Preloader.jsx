@@ -240,7 +240,7 @@ export default function Preloader({ onComplete }) {
             className="font-mono text-xs sm:text-sm font-bold tracking-[0.28em] uppercase"
             style={{ color: '#FF5500' }}
           >
-            FAKE LOADING...
+            INITIALIZING...
           </span>
         </div>
 
