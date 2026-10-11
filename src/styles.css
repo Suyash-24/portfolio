@@ -26,6 +26,9 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
+@media (pointer: coarse) {
+  *, *::before, *::after { cursor: auto !important; }
+}
 
 html { font-size: 16px; scroll-behavior: smooth; overflow-x: clip; }
 
@@ -498,7 +501,7 @@ button { font-family: var(--font-mono); border: none; background: none; }
   letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--text-ghost); min-width: 7rem; flex-shrink: 0;
 }
-.dossier-val { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-primary); }
+.dossier-val { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-primary); word-break: break-word; overflow-wrap: anywhere; }
 .about-actions { display: flex; gap: 0.5rem; margin-top: 2rem; flex-wrap: wrap; }
 
 /* PROJECTS - Gertix numbered dossier cards */
@@ -1622,5 +1625,149 @@ button { font-family: var(--font-mono); border: none; background: none; }
     border-top: none;
     border-left: none;
     border-radius: 0;
+  }
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS ENHANCEMENTS (PHONE SCREENS)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Hero Section: Text padding and layout */
+  .hero-phase {
+    padding: 0 1.25rem !important;
+  }
+  .hero-glowing-title {
+    font-size: clamp(2.4rem, 10vw, 3.5rem) !important;
+    line-height: 1.05 !important;
+    margin-bottom: 1.5rem !important;
+  }
+  .hero-bio {
+    font-size: 0.78rem !important;
+    line-height: 1.7 !important;
+    margin-bottom: 2rem !important;
+  }
+  .hud-floating {
+    display: none !important;
+  }
+
+  /* About / Dossier Card */
+  .dossier-card {
+    padding: 1.25rem 1rem !important;
+    border-radius: 10px !important;
+  }
+  .dossier-row {
+    gap: 0.75rem !important;
+    padding: 0.55rem 0 !important;
+  }
+  .dossier-key {
+    min-width: 5.2rem !important;
+    font-size: 0.55rem !important;
+  }
+  .dossier-val {
+    font-size: 0.68rem !important;
+  }
+
+  /* Projects List and Image Frame */
+  .project-card {
+    padding: 2.5rem 0 !important;
+    gap: 1.5rem !important;
+  }
+  .project-card-left {
+    padding-right: 0 !important;
+  }
+  .project-img-frame {
+    aspect-ratio: 16/11 !important;
+    border-radius: 6px;
+  }
+
+  /* Terminal Visualizer */
+  .cipher-visual {
+    padding: 8px !important;
+  }
+  .terminal-window {
+    width: 100% !important;
+    min-height: 200px !important;
+    font-size: 0.68rem !important;
+  }
+  .terminal-body {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+
+  /* EDA Dashboard Visualizer */
+  .eda-visual {
+    padding: 6px !important;
+  }
+  .eda-dashboard-wrapper {
+    width: 100% !important;
+    padding: 10px !important;
+    transform: scale(0.9) !important;
+    transform-origin: center !important;
+  }
+  .dash-title {
+    font-size: 0.75rem !important;
+  }
+  .dash-kpis {
+    gap: 6px !important;
+    margin-bottom: 10px !important;
+  }
+  .kpi-card {
+    padding: 6px 4px !important;
+  }
+  .kpi-val {
+    font-size: 0.95rem !important;
+  }
+  .dash-grid {
+    gap: 8px !important;
+    min-height: 120px !important;
+  }
+
+  /* Crawler Visualizer */
+  .crawler-visual {
+    padding: 6px !important;
+  }
+  .crawler-viz-wrapper {
+    width: 100% !important;
+    padding: 10px !important;
+    transform: scale(0.88) !important;
+    transform-origin: center !important;
+  }
+  .crawler-input-side {
+    min-width: 130px !important;
+    gap: 8px !important;
+  }
+  .crawler-dom-tree {
+    padding: 8px 6px !important;
+    min-height: 80px !important;
+  }
+  .crawler-arrow {
+    margin: 0 4px !important;
+    font-size: 1.1rem !important;
+  }
+  .crawler-output-side {
+    min-width: 110px !important;
+  }
+
+  /* Contact Section */
+  .contact-email-display {
+    font-size: clamp(1.1rem, 5vw, 1.8rem) !important;
+    word-break: break-all !important;
+  }
+  .contact-matrix {
+    opacity: 0.3 !important;
+    font-size: 0.5rem !important;
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .eda-dashboard-wrapper {
+    transform: scale(0.8) !important;
+  }
+  .crawler-viz-wrapper {
+    transform: scale(0.76) !important;
+  }
+  .terminal-window {
+    font-size: 0.62rem !important;
   }
 }

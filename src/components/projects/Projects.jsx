@@ -81,36 +81,28 @@ export default function Projects() {
               <div className="project-img-frame" style={{ position: 'relative', overflow: 'hidden' }}>
                 <ProjectVisual id={p.id} />
                 
-                {/* Overlay UI elements on top of the visual */}
+                {/* Discrete signal badge in top corner */}
                 <div style={{
                   position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '1.5rem',
+                  top: '0.75rem',
+                  right: '0.75rem',
+                  zIndex: 2,
                   pointerEvents: 'none',
                 }}>
                   <span style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '0.55rem',
-                    letterSpacing: '0.15em',
+                    fontSize: '0.52rem',
+                    letterSpacing: '0.12em',
                     textTransform: 'uppercase',
                     color: 'var(--text-ghost)',
-                    background: 'rgba(235, 235, 235, 0.8)',
-                    padding: '0.2rem 0.6rem',
+                    background: 'rgba(235, 235, 235, 0.75)',
+                    padding: '0.2rem 0.5rem',
                     borderRadius: '4px',
-                    backdropFilter: 'blur(4px)'
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(0,0,0,0.06)'
                   }}>
                     {p.signal}
                   </span>
-
-                  <div className="tag-group" style={{ justifyContent: 'center' }}>
-                    {p.stack.slice(0, 3).map((t) => (
-                      <span key={t} className="tag" style={{ background: 'rgba(235,235,235,0.8)', backdropFilter: 'blur(4px)' }}>{t}</span>
-                    ))}
-                  </div>
                 </div>
               </div>
 

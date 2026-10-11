@@ -4,6 +4,7 @@ import Lenis from 'lenis'
 
 import Cursor from './components/ui/Cursor'
 import CommandPalette from './components/ui/CommandPalette'
+import Preloader from './components/ui/Preloader'
 import Navigation from './components/navigation/Navigation'
 import Hero from './components/hero/Hero'
 import About from './components/about/About'
@@ -18,6 +19,7 @@ import './styles.css'
 // ── App Shell ─────────────────────────────────────────────────────────────────
 function App() {
   const [commandOpen, setCommandOpen] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   // Smooth scroll with Lenis + global reveal animations
   useEffect(() => {
@@ -107,6 +109,7 @@ function App() {
 
   return (
     <div className="app">
+      {!loaded && <Preloader onComplete={() => setLoaded(true)} />}
       <Cursor />
       <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
       <Navigation onCommandOpen={() => setCommandOpen(true)} />

@@ -185,7 +185,7 @@ function getRockMaps() {
 }
 
 // ── Geometry: sharp box, pitted, Y-notch over the top-front edge, sheared corner ──
-function makeRockGeometry(size = CUBE_SIZE, segments = 128) {
+function makeRockGeometry(size = CUBE_SIZE, segments = typeof window !== 'undefined' && window.innerWidth < 768 ? 64 : 110) {
   const geo = new THREE.BoxGeometry(size, size, size, segments, segments, segments)
   geo.clearGroups()
 
@@ -667,6 +667,13 @@ export default function IceCubeCanvas() {
   const containerRef = useRef(null)
   const hud = useRef({})
   const [visible, setVisible] = useState(true)
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -682,14 +689,17 @@ export default function IceCubeCanvas() {
       ref={containerRef}
       style={{
         position: 'absolute',
-        right: '-2vw',
+        right: isMobile ? '0' : '-2vw',
+        left: isMobile ? '0' : 'auto',
+        margin: isMobile ? '0 auto' : '0',
         top: '50%',
         transform: 'translateY(-50%)',
-        width: '54vw',
-        height: '78vh',
-        zIndex: 10,
+        width: isMobile ? '92vw' : '54vw',
+        height: isMobile ? '65vh' : '78vh',
+        opacity: isMobile ? 0.38 : 1,
+        zIndex: isMobile ? 5 : 10,
         overflow: 'hidden',
-        pointerEvents: 'auto',
+        pointerEvents: isMobile ? 'none' : 'auto',
         visibility: visible ? 'visible' : 'hidden'
       }}
     >
@@ -727,24 +737,27 @@ export default function IceCubeCanvas() {
         </Environment>
       </Canvas>
 
-      {/* We removed the SVG connecting lines completely! */}
-      <div ref={(el) => (hud.current.dot1 = el)} style={dotStyle} aria-hidden="true" />
-      <div ref={(el) => (hud.current.dot2 = el)} style={dotStyle} aria-hidden="true" />
+      {!isMobile && (
+        <>
+          <div ref={(el) => (hud.current.dot1 = el)} style={dotStyle} aria-hidden="true" />
+          <div ref={(el) => (hud.current.dot2 = el)} style={dotStyle} aria-hidden="true" />
 
-      {/* Floating HUD Tags (they track the dots directly) */}
-      <div className="hud-floating" ref={(el) => (hud.current.containerTL = el)} aria-hidden="true">
-        <div className="hud-offset tl" ref={(el) => (hud.current.labelTL = el)}>
-          SUYASH_N // 2026<br />
-          DATA SCIENCE & ML
-        </div>
-      </div>
+          {/* Floating HUD Tags (they track the dots directly) */}
+          <div className="hud-floating" ref={(el) => (hud.current.containerTL = el)} aria-hidden="true">
+            <div className="hud-offset tl" ref={(el) => (hud.current.labelTL = el)}>
+              SUYASH_N // 2026<br />
+              DATA SCIENCE & ML
+            </div>
+          </div>
 
-      <div className="hud-floating" ref={(el) => (hud.current.containerR = el)} aria-hidden="true">
-        <div className="hud-offset tr" ref={(el) => (hud.current.labelR = el)}>
-          STATUS: OPEN<br />
-          PUNE, IND
-        </div>
-      </div>
+          <div className="hud-floating" ref={(el) => (hud.current.containerR = el)} aria-hidden="true">
+            <div className="hud-offset tr" ref={(el) => (hud.current.labelR = el)}>
+              STATUS: OPEN<br />
+              PUNE, IND
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

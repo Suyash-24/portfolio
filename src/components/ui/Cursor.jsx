@@ -2,6 +2,10 @@ import { useEffect, useRef } from 'react'
 
 // Custom cursor — ink blue dot + ring (matches new design system)
 export default function Cursor() {
+  if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) {
+    return null
+  }
+
   const dotRef  = useRef(null)
   const ringRef = useRef(null)
   let mouseX = 0, mouseY = 0
